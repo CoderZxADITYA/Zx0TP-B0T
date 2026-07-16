@@ -1,0 +1,643 @@
+Telegram Bot Raw:
+{
+    "update_id": 851825431,
+    "message": {
+        "message_id": 5127838,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228756,
+        "text": "\ud83d\ude97\u2705\u26a1\ud83c\udd99\ud83d\udcf1\ud83d\udce3\ud83d\udca4\ud83d\udc51\ud83d\udc8e\u2705\ud83d\udeab\ud83d\udc4d\u231a\ufe0f\u231a\ufe0f\ud83d\udc40",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6057816724059722061"
+            },
+            {
+                "offset": 2,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6293973469310750476"
+            },
+            {
+                "offset": 3,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6060078591276749279"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6059658968676961981"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6057891250332241964"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6059631768649077274"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6291989684046271211"
+            },
+            {
+                "offset": 12,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6294100961119966181"
+            },
+            {
+                "offset": 14,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6294040926067101259"
+            },
+            {
+                "offset": 16,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6293821461828211185"
+            },
+            {
+                "offset": 17,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5240241223632954241"
+            },
+            {
+                "offset": 19,
+                "length": 2,
+                "type": "custom_emoji",
+
+{
+    "update_id": 851825434,
+    "message": {
+        "message_id": 5127842,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228801,
+        "text": "\u2705\u2705\u2705\u2705\ud83d\ude01\ud83e\ude96\u26c8\u26bd\ufe0f\ud83c\udfd3\u26d4\ud83c\udf1f\ud83d\udc51\u26a1\u2728\ud83c\udf86\ud83d\udfe5\ud83d\udd35",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5217615164118936274"
+            },
+            {
+                "offset": 1,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5215319521279093808"
+            },
+            {
+                "offset": 2,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5215566241380445099"
+            },
+            {
+                "offset": 3,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5217615516306255576"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5456609495478194312"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5456575109970025261"
+            },
+            {
+                "offset": 8,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5456302499805812642"
+            },
+            {
+                "offset": 9,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5456388115683890716"
+            },
+            {
+                "offset": 11,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5458561437855141242"
+            },
+            {
+                "offset": 13,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5017122105011995219"
+            },
+            {
+                "offset": 14,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5064709487953183440"
+            },
+            {
+                "offset": 16,
+                "length": 2,
+                "type": "custom_emoji",
+                "cust
+
+{
+    "update_id": 851825436,
+    "message": {
+        "message_id": 5127846,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228847,
+        "text": "\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5\ud83d\udfe5",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197611929463433785"
+            },
+            {
+                "offset": 2,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197184691886631223"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5195426276441073864"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5195413606287552067"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5195384512179087880"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5194994958645340092"
+            },
+            {
+                "offset": 12,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5195121668770508782"
+            },
+            {
+                "offset": 14,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197546972378049681"
+            },
+            {
+                "offset": 16,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5194917790967932548"
+            },
+            {
+                "offset": 18,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5195314933708892957"
+            },
+            {
+                "offset": 20,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197344237036775471"
+            },
+            {
+                "offset": 22,
+                "length": 2,
+                "type"
+
+{
+    "update_id": 851825438,
+    "message": {
+        "message_id": 5127850,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228877,
+        "text": "\ud83e\uddd0\ud83d\udc4d\ud83c\udfad\ud83d\ude0e\ud83d\ude01\ud83d\ude0e\u2705\ud83d\udd5e\ud83d\udccc\ud83e\udd29\ud83e\udd29\ud83c\udf1f\ud83d\udcee\ud83c\udf33",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6141024787637471668"
+            },
+            {
+                "offset": 2,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6140793963210082249"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6141060654909360432"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6141158008933058796"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6140991029194524874"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "6141019324439071147"
+            },
+            {
+                "offset": 12,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5895514131896733546"
+            },
+            {
+                "offset": 13,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5893102202817352158"
+            },
+            {
+                "offset": 15,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5895440460322706085"
+            },
+            {
+                "offset": 17,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5469880424731791536"
+            },
+            {
+                "offset": 19,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5469976387186086047"
+            },
+            {
+                "offset": 21,
+                "length": 2,
+                "type": "custom_emoji",
+
+{
+    "update_id": 851825440,
+    "message": {
+        "message_id": 5127854,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228902,
+        "text": "\ud83e\udd0d\ud83e\udd0d\ud83e\udd0d\ud83e\udd0d\ud83e\udd0d\ud83e\udd0d\ud83d\udc4d\ud83d\ude0e\ud83d\udc7b\ud83d\ude08\ud83d\ude02\u271d\ufe0f\ud83d\udc79",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5764979527331615949"
+            },
+            {
+                "offset": 2,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5764787585243157694"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5767051591353897063"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5764775997421392643"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5766967998405416462"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5765097514378203671"
+            },
+            {
+                "offset": 12,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5253764104258083076"
+            },
+            {
+                "offset": 14,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5253759912370003110"
+            },
+            {
+                "offset": 16,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5253661484604480067"
+            },
+            {
+                "offset": 18,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5253858378790233351"
+            },
+            {
+                "offset": 20,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5253537149596228810"
+            },
+            {
+                "offset": 22,
+                "length": 2,
+                "type": "custom_emoji",
+                "c
+
+{
+    "update_id": 851825443,
+    "message": {
+        "message_id": 5127859,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228932,
+        "text": "\ud83e\udde2\ud83e\udde2\ud83e\udde2\ud83e\udde2\ud83e\udde2\ud83e\udde2\ud83d\ude42\u27649\u20e3\u2705\ufe0f\u2b50\ud83d\udcb5\ud83e\ude99\u26cf\ud83d\udcb3",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5285248598244601692"
+            },
+            {
+                "offset": 2,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5285351342452258023"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5285011348546139945"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5285029228494992954"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5285142942049121032"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5287662653332795979"
+            },
+            {
+                "offset": 12,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5807558282620964608"
+            },
+            {
+                "offset": 14,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5807891773946598031"
+            },
+            {
+                "offset": 15,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5794291150118459966"
+            },
+            {
+                "offset": 17,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5870844977914842593"
+            },
+            {
+                "offset": 19,
+                "length": 1,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5267500801240092311"
+            },
+            {
+                "offset": 20,
+                "length": 2,
+                "type": "custom_emoji",
+                "
+
+{
+    "update_id": 851825445,
+    "message": {
+        "message_id": 5127862,
+        "from": {
+            "id": 8640978094,
+            "is_bot": false,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "language_code": "en",
+            "is_premium": true
+        },
+        "chat": {
+            "id": 8640978094,
+            "first_name": "\ud835\udc02\ud835\udc0e\ud835\udc03\ud835\udc04\ud835\udc11 \ud835\udc19",
+            "username": "Coderxzofficial",
+            "type": "private"
+        },
+        "date": 1783228962,
+        "text": "\ud83d\udcbb\ud83e\uddfe\ud83c\udf40\ud83d\udcbc\ud83d\udee1\ud83d\udcc8\ud83d\udd2d\u2764\ufe0f\u200d\ud83d\udd25\u26a1\ufe0f\ud83c\udf81\ud83e\udd42\ud83c\udd92\ud83d\udc51\u25b6\ufe0f\u231a\ufe0f\u231a\ufe0f\u231a\ufe0f\u231a\ufe0f\u231a\ufe0f\u231a\ufe0f\ud83d\udc40\ud83d\udecd",
+        "entities": [
+            {
+                "offset": 0,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5193177581888755275"
+            },
+            {
+                "offset": 2,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5444856076954520455"
+            },
+            {
+                "offset": 4,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5305699699204837855"
+            },
+            {
+                "offset": 6,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5445221832074483553"
+            },
+            {
+                "offset": 8,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197288647275071607"
+            },
+            {
+                "offset": 10,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5197503331215361533"
+            },
+            {
+                "offset": 12,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5379999674193172777"
+            },
+            {
+                "offset": 14,
+                "length": 5,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5042225965518816316"
+            },
+            {
+                "offset": 19,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5042334757040423886"
+            },
+            {
+                "offset": 21,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5041975203853239332"
+            },
+            {
+                "offset": 23,
+                "length": 2,
+                "type": "custom_emoji",
+                "custom_emoji_id": "5039774728898741491"
+            },

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: zxotp-bot
+    runtime: node
+    buildCommand: "npm install -g pnpm@10 && pnpm install && pnpm --filter @workspace/api-server run build"
+    startCommand: "node artifacts/api-server/dist/index.mjs"
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false      # fill in Render dashboard — never commit this
+      - key: DATABASE_URL
+        sync: false      # paste Railway PostgreSQL URL
+      - key: SESSION_SECRET
+        generateValue: true   # Render auto-generates a random secret
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
