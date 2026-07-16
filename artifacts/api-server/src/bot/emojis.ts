@@ -25,18 +25,25 @@ export const E: Record<string, { char: string; id?: string }> = {
   RED:       { char: '🔴', id: '5197611929463433785' },
   HOURGLASS: { char: '⌛', id: '6293821461828211185' },
 
-  // ── Plain emoji (no premium ID — safe fallback) ───────────────────────────
+  // ── Verified premium IDs (new set from user) ──────────────────────────────
+  FIRE:     { char: '🔥', id: '5893185207355315979' },
+  SPIDER:   { char: '🕷', id: '5893293174243201165' },
+  CHECK2:   { char: '✅', id: '5902002809573740949' },
+  GLOBE:    { char: '🌐', id: '6039450035152753195' },
+  SOON:     { char: '🔜', id: '5893368370530621889' },
+  MONEYMOUTH: { char: '🤑', id: '6235277570070286919' },
+  CARD:     { char: '💳', id: '5852440446051028724' },
+  MONEY:    { char: '💰', id: '6318864007381911770' },
+  SUIT:     { char: '🤵', id: '5264950350875490328' },
+
+  // ── Plain emoji (no verified premium ID — safe fallback) ──────────────────
   CROSS:    { char: '❌' },
-  FIRE:     { char: '🔥' },
   ROCKET:   { char: '🚀' },
-  MONEY:    { char: '💰' },
   LOCK:     { char: '🔐' },
-  GLOBE:    { char: '🌍' },
   SHIELD:   { char: '🛡' },
   TOOLS:    { char: '⚙️' },
   KEY:      { char: '🗝' },
   BELL:     { char: '🔔' },
-  CARD:     { char: '💳' },
   BANK:     { char: '🏦' },
   WARNING:  { char: '⚠️' },
   QUESTION: { char: '❓' },

