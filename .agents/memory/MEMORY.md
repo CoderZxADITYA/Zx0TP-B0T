@@ -1,0 +1,4 @@
+- [Telegram 4096 limit](telegram-msg-limit.md) — messages >4096 chars crash editOrSend with "message is too long"; always split into paged messages.
+- [bot.catch placement](bot-catch.md) — must register bot.catch() before bot.launch() or unhandled action errors propagate to the launch promise and log as "bot failed to start".
+- [Git force push flow](git-push.md) — repo uses PAT auth; set remote URL to https://user:PAT@github.com/... then push --force then reset URL back.
+- [DB auto-migrate](db-migrate.md) — runMigrations() in migrate.ts runs CREATE TABLE IF NOT EXISTS at startup; called from index.ts before startBot().
