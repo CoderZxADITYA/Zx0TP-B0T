@@ -2819,7 +2819,7 @@ function registerActions(b: Telegraf): void {
 
 export async function startBot(): Promise<void> {
   // ── Token resolution: DB override > env var ─────────────────────────────────
-  let token = process.env['TELEGRAM_BOT_TOKEN'];
+  let token = process.env['BOT_TOKEN'] ?? process.env['TELEGRAM_BOT_TOKEN'];
 
   // Load persisted state (no-op if no DATABASE_URL)
   try {
@@ -2901,8 +2901,8 @@ export async function startBot(): Promise<void> {
     try { ctx?.answerCbQuery?.('Something went wrong — try again.', { show_alert: true }); } catch { /* ignore */ }
   });
 
+  logger.info('Telegram bot launching (long polling)…');
   bot.launch()
-    .then(() => logger.info('Telegram bot started (long polling)'))
     .catch((err) => logger.error({ err }, 'Telegram bot launch error'));
 
   // Sweep stale sessions every 15 minutes (TTL = 2 hours)
