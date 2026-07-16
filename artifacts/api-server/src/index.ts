@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startBot } from "./bot/bot.js";
+import { runMigrations } from "./bot/migrate.js";
 
 const rawPort = process.env["PORT"];
 
@@ -24,6 +25,6 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  // Start the Telegram bot (long polling — runs alongside Express)
-  startBot();
+  // Auto-create DB tables then start the bot
+  runMigrations().then(() => startBot());
 });

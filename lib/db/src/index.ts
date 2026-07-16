@@ -30,4 +30,10 @@ export function getDb() {
   return init();
 }
 
+/** Returns the raw pg.Pool, or null when DATABASE_URL is not set. */
+export function getPool(): pg.Pool | null {
+  init();
+  return _pool;
+}
+
 export * from "./schema/index.js";

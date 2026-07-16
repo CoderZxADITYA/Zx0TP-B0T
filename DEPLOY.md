@@ -1,220 +1,162 @@
-# Deploying ZxOTP Bot — Render (Free) + Railway (PostgreSQL) + Cron Job
+# ZxOTP BOT — Deployment Guide
 
-This guide deploys the bot for free using:
-- **Render** — runs the Node.js API server + Telegram bot
-- **Railway** — provides a free PostgreSQL database
-- **cron-job.org** — pings the server every 14 min to keep it awake (Render free plan sleeps after 15 min)
+Complete guide: Render free plan + Railway PostgreSQL + cron job for 24/7 uptime.
 
 ---
 
-## Part 1 — Railway PostgreSQL (do this first)
+## 1. Set up the Database on Railway
 
-### 1. Create a Railway account
-1. Go to [railway.app](https://railway.app) and sign up (GitHub login recommended)
-2. Click **New Project** → **Deploy PostgreSQL**
-3. Railway creates a Postgres instance automatically
+### Steps
+1. Go to [railway.app](https://railway.app) → **New Project** → **Provision PostgreSQL**
+2. Click the **PostgreSQL** service → **Variables** tab
+3. Copy the value of **DATABASE_URL** (starts with `postgresql://`)
+4. Keep this tab open — you'll paste it into Render in the next step
 
-### 2. Get the connection string
-1. Click on your Postgres service
-2. Go to the **Variables** tab
-3. Copy the value of **`DATABASE_URL`** — it looks like:
-   ```
-   postgresql://postgres:AbCdEfGhIj123@monorail.proxy.rlwy.net:12345/railway
-   ```
-4. **Save this string** — you'll paste it into Render in Part 2.
-
-### 3. Notes on Railway free tier
-- **500 hours/month** of compute included on the free Hobby plan
-- PostgreSQL storage: **1 GB** free
-- The database stays alive even when Render sleeps — no data is lost
+> Railway free tier gives 500 MB storage and 5 GB outbound data/month — enough for the bot.
 
 ---
 
-## Part 2 — Render Web Service
+## 2. Deploy the API Server on Render
 
-### 1. Push code to GitHub first
-If you haven't already:
-```bash
-git init
-git add .
-git commit -m "Initial deploy"
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-git push -u origin main
-```
-
-### 2. Create a Render account
-Go to [render.com](https://render.com) and sign up (GitHub login recommended)
-
-### 3. Create a new Web Service
-1. Click **New +** → **Web Service**
-2. Connect your GitHub repo
+### Steps
+1. Go to [render.com](https://render.com) → **New** → **Web Service**
+2. Connect your GitHub repo: `CoderZxADITYA/Zx0TP-B0T`
 3. Fill in the settings:
 
-| Setting | Value |
-|---------|-------|
-| **Name** | `zxotp-bot` (or anything) |
-| **Region** | Pick closest to you |
+| Field | Value |
+|---|---|
+| **Name** | `zxotp-bot` |
+| **Region** | Oregon (US West) or Frankfurt |
 | **Branch** | `main` |
-| **Runtime** | `Node` |
-| **Root Directory** | *(leave blank)* |
-| **Build Command** | `npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build` |
-| **Start Command** | `node artifacts/api-server/dist/index.mjs` |
-| **Instance Type** | **Free** |
+| **Root Directory** | `artifacts/api-server` |
+| **Runtime** | Node |
+| **Build Command** | `npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build` |
+| **Start Command** | `node dist/index.mjs` |
+| **Plan** | Free |
 
-> ⚠️ If Render auto-detects a different build command, **override it** with the one above.
-
-### 4. Add Environment Variables
-Click **Environment** → **Add Environment Variable** for each:
+4. Click **Environment** → **Add Environment Variable** for each:
 
 | Key | Value |
-|-----|-------|
-| `TELEGRAM_BOT_TOKEN` | Your bot token from @BotFather |
-| `DATABASE_URL` | The Railway connection string from Part 1 |
-| `SESSION_SECRET` | Any random long string (e.g. `mySuperSecret123!`) — used to protect the `/admin/token` page |
-| `TWILIO_ACCOUNT_SID` | Your Twilio Account SID *(optional — calls won't work without it)* |
-| `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token *(optional)* |
-| `TWILIO_FROM_NUMBER` | Your Twilio phone number e.g. `+12025551234` *(optional)* |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | Your token from @BotFather |
+| `DATABASE_URL` | Paste the Railway URL from Step 1 |
+| `SESSION_SECRET` | Any long random string (32+ chars) |
+| `TWILIO_ACCOUNT_SID` | Your Twilio Account SID |
+| `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token |
+| `TWILIO_PHONE_NUMBER` | Your Twilio phone number e.g. `+15005550006` |
 | `NODE_ENV` | `production` |
 
-> **Tip:** Mark sensitive values (tokens, secrets) as **Secret** in Render's UI.
+5. Click **Create Web Service** → wait for the first deploy to finish (~3-5 min)
+6. Copy your Render URL e.g. `https://zxotp-bot.onrender.com`
 
-### 5. Deploy
-Click **Create Web Service**. Render will:
-1. Clone your repo
-2. Run the build command (~2 minutes)
-3. Start the server
-4. Assign a URL like `https://zxotp-bot.onrender.com`
-
-**Check the logs** — you should see:
-```
-Server listening  port: 10000
-DB state loaded   users: 0  licenses: 0
-Telegram bot started (long polling)
-```
-
-If you see `Telegram bot started` — **the bot is live**.
-
-### 6. Initialize the database tables
-After deploy, the bot runs in in-memory mode until tables are created. Push the schema once:
-
-**Option A — Render Shell** (easiest)
-1. In Render dashboard → your service → **Shell** tab
-2. Run:
-   ```bash
-   pnpm --filter @workspace/db run push
-   ```
-3. You should see `Tables created` or `Schema up to date`
-
-**Option B — add to build command** (runs automatically on every deploy)
-Change Build Command to:
-```
-npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/db run push
-```
+### DB tables are created automatically
+The bot runs `CREATE TABLE IF NOT EXISTS` at startup — no manual migration needed.
 
 ---
 
-## Part 3 — Cron Job (Keep Render Alive 24/7)
+## 3. Configure the Twilio Webhook
 
-Render's free plan **sleeps your service after 15 minutes of no HTTP traffic**. A cron job pings it every 14 minutes to keep it awake.
+After the first successful deploy, set the Twilio webhook URLs:
 
-### Option A — cron-job.org (recommended, totally free)
-1. Go to [cron-job.org](https://cron-job.org) and create a free account
+1. Go to [twilio.com/console](https://twilio.com/console) → **Phone Numbers**
+2. Click your number → **Voice Configuration**
+3. Set **A call comes in** → **Webhook** → `https://zxotp-bot.onrender.com/api/twilio/voice`
+4. Save
+
+All Twilio sub-routes are handled automatically:
+- `/api/twilio/voice` — incoming call TwiML
+- `/api/twilio/gather` — OTP transcript
+- `/api/twilio/dtmf` — keypad input
+- `/api/twilio/status` — call status callbacks
+- `/api/twilio/hold` — hold music
+- `/api/twilio/transfer` — live transfer
+
+---
+
+## 4. Keep the Bot Running 24/7 (cron job)
+
+Render free plan **spins down** the server after 15 minutes of inactivity. A cron job pings it every 10 minutes to prevent sleep.
+
+### Option A — cron-job.org (recommended, free)
+1. Go to [cron-job.org](https://cron-job.org) → **Sign up free**
 2. Click **Create Cronjob**
 3. Fill in:
+   - **URL:** `https://zxotp-bot.onrender.com/health`
+   - **Schedule:** Every 10 minutes (`*/10 * * * *`)
+   - **Request method:** GET
+4. Save → Enable
 
-| Setting | Value |
-|---------|-------|
-| **Title** | `ZxOTP Bot Keepalive` |
-| **URL** | `https://YOUR-APP.onrender.com/api/healthz` |
-| **Execution schedule** | Every **14 minutes** |
-| **Request method** | GET |
+### Option B — UptimeRobot (free)
+1. Go to [uptimerobot.com](https://uptimerobot.com) → **New Monitor**
+2. **Monitor Type:** HTTP(s)
+3. **URL:** `https://zxotp-bot.onrender.com/health`
+4. **Monitoring Interval:** 5 minutes
+5. Save → the bot stays alive indefinitely
 
-4. Click **Create** and make sure it shows **Active**
+> The `/health` route is already registered and returns `{"status":"ok"}`.
 
-### Option B — UptimeRobot (also free)
-1. Go to [uptimerobot.com](https://uptimerobot.com) — free tier: 50 monitors
-2. **New Monitor** → **HTTP(s)** monitor
-3. URL: `https://YOUR-APP.onrender.com/api/healthz`
-4. Monitoring interval: **5 minutes** (more aggressive, keeps it reliably awake)
-5. It also **alerts you if the bot goes down** — bonus!
+---
 
-### Option C — GitHub Actions (no third-party needed)
-Create `.github/workflows/keepalive.yml`:
-```yaml
-name: Keep Render Alive
-on:
-  schedule:
-    - cron: '*/14 * * * *'   # every 14 minutes
-  workflow_dispatch:          # allows manual trigger
+## 5. Verify Everything Works
 
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ping health endpoint
-        run: curl -s https://YOUR-APP.onrender.com/api/healthz
+After deploy + cron setup:
+
 ```
-Push this file to your repo — GitHub Actions runs it for free on public repos.
+# Check server health
+curl https://zxotp-bot.onrender.com/health
+
+# Expected: {"status":"ok","uptime":...}
+```
+
+Then in Telegram:
+1. Open your bot
+2. Send `/start` — you should see the welcome screen
+3. Send `/admin` — you should see the admin panel (owner only)
 
 ---
 
-## Part 4 — Twilio Webhook URL
+## 6. Set the Bot Token via Telegram (in-bot secure box)
 
-For the bot to receive spoken OTPs from callees, Twilio must be able to reach your server. After Render deploys:
+You can change the bot token without touching Render:
 
-1. Note your Render URL: `https://zxotp-bot.onrender.com`
-2. In your Twilio console → Phone Numbers → your number → Voice & Fax:
-   - **A call comes in:** `https://zxotp-bot.onrender.com/api/twilio/voice`
-   - **Status callback:** `https://zxotp-bot.onrender.com/api/twilio/status`
-
-The bot auto-configures these URLs from `REPLIT_DEV_DOMAIN` locally, or from the server's hostname in production.
+1. Send `/admin` in Telegram (as the owner)
+2. Tap **🔑 Change Token**
+3. Paste the new token from @BotFather
+4. Bot will show the masked token — type `YES` to confirm
+5. **Restart the Render service** (Dashboard → Manual Deploy or click Restart)
 
 ---
 
-## Part 5 — Verify Everything Works
+## 7. Update the Bot (push new code)
 
-1. **Visit** `https://YOUR-APP.onrender.com/api/healthz` — should return `{"status":"ok"}`
-2. **Open** `https://YOUR-APP.onrender.com/admin/token` — should show the admin token panel
-3. **Open Telegram**, find your bot (`@ZxOTP_bot` or whatever you named it)
-4. Send `/start` — the welcome message should appear
-5. Send `/license` — should show "no active license"
-6. Go to Telegram, talk to yourself as admin: `/admin` → `Generate 1-Day Key` → copy the key → `/redeem KEY`
-7. Try `/otp`, enter a phone number — if Twilio is configured, the call goes out
+```bash
+git push origin main
+```
+
+Render auto-deploys on every push to `main`. You can also trigger a manual deploy from the Render dashboard.
+
+---
+
+## Architecture Summary
+
+```
+Telegram ──► Render (Node.js API server)
+                ├── Telegraf bot (long polling)
+                ├── Twilio webhooks (Express routes)
+                └── PostgreSQL on Railway (optional — in-memory fallback)
+
+cron-job.org ──► GET /health every 10 min ──► keeps Render awake
+```
 
 ---
 
 ## Troubleshooting
 
 | Problem | Fix |
-|---------|-----|
-| `Telegram bot failed to start` in logs | Check `TELEGRAM_BOT_TOKEN` is set correctly in Render env vars |
-| Bot responds but calls fail | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` |
-| Database errors in logs | Run `pnpm --filter @workspace/db run push` via Render Shell |
-| Bot goes offline after ~15 min | Set up the cron job in Part 3 |
-| Build fails | Make sure Build Command starts with `npm install -g pnpm &&` |
-| `/admin/token` says wrong password | The password is your `SESSION_SECRET` env var |
-
----
-
-## Summary — All URLs
-
-| URL | Purpose |
-|-----|---------|
-| `https://YOUR-APP.onrender.com/api/healthz` | Health check (ping this with cron) |
-| `https://YOUR-APP.onrender.com/api/twilio/voice` | Twilio voice webhook |
-| `https://YOUR-APP.onrender.com/api/twilio/gather` | Twilio gather webhook |
-| `https://YOUR-APP.onrender.com/api/twilio/status` | Twilio status callback |
-| `https://YOUR-APP.onrender.com/admin/token` | Web UI to change bot token |
-
----
-
-## Cost Summary
-
-| Service | Cost |
-|---------|------|
-| Render Web Service | **Free** (750 hrs/month — enough for 24/7 with cron) |
-| Railway PostgreSQL | **Free** (500 hrs/month, 1 GB storage) |
-| cron-job.org | **Free** |
-| UptimeRobot | **Free** (50 monitors) |
-| Twilio (calls) | ~$0.013/min outbound + $1/month per number |
-| **Total (no calls)** | **$0/month** |
+|---|---|
+| Bot not responding | Check Render logs — is `TELEGRAM_BOT_TOKEN` set? |
+| Calls not working | Check `TWILIO_*` env vars + webhook URL in Twilio console |
+| DB errors in logs | Check `DATABASE_URL` is the full Railway connection string |
+| Render spins down | Make sure cron-job.org / UptimeRobot is pinging `/health` |
+| "Tables not found" | Delete and re-add `DATABASE_URL` in Render — bot auto-creates tables |
+| New token not active | After saving token in Telegram, restart the Render service |
