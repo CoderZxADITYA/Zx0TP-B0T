@@ -19,10 +19,10 @@
  * Falls back to no validation if the token is not set (useful in dev).
  */
 
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request, type Response } from 'express';
 import twilio from 'twilio';
 import { getByCall, updateSession, clearSession } from '../bot/sessions.js';
-import { notifyUser }    from '../bot/bot.js';
+import { notifyUser, notifyCallRecording } from '../bot/bot.js';
 import { resolveScript } from '../bot/scripts.js';
 import { logger }        from '../lib/logger.js';
 import { publicBaseUrl } from '../lib/publicUrl.js';
@@ -287,6 +287,37 @@ router.post('/status', (req: Request, res: Response) => {
         'Clearing session on terminal status',
       );
       clearSession(session.chatId);
+    }
+  }
+
+  res.sendStatus(200);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/recording
+// SignalWire recording-status callback — delivers the recording URL to the
+// Telegram operator once the recording is fully processed.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/recording', async (req: Request, res: Response) => {
+  const body             = req.body as Record<string, string>;
+  const callSid          = body['CallSid']          ?? '';
+  const recordingUrl     = body['RecordingUrl']     ?? '';
+  const recordingStatus  = body['RecordingStatus']  ?? '';
+  const recordingDuration = body['RecordingDuration'] ?? '0';
+
+  logger.info({ callSid, recordingStatus, recordingUrl }, 'SignalWire recording callback');
+
+  if (recordingStatus === 'completed' && recordingUrl) {
+    const session = getByCall(callSid);
+    const chatId  = session?.chatId;
+    if (chatId) {
+      // Append .mp3 so Telegram renders a playable audio file
+      const mp3Url = recordingUrl.endsWith('.mp3') ? recordingUrl : `${recordingUrl}.mp3`;
+      notifyCallRecording(chatId, mp3Url, recordingDuration).catch((err) => {
+        logger.error({ err, callSid }, 'notifyCallRecording failed');
+      });
+    } else {
+      logger.warn({ callSid }, 'Recording callback: no session found for callSid');
     }
   }
 
