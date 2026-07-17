@@ -56,24 +56,23 @@ export interface CustomScript {
 
 // ── Shorthand helpers ──────────────────────────────────────────────────────────
 const HOLD  = 'Thank you. Please hold while your response is being verified.';
-const JO    = 'Polly.Joanna';
-const MT    = 'Polly.Matthew';
-const AMY   = 'Polly.Amy';
-const BRN   = 'Polly.Brian';
-const NIC   = 'Polly.Nicole';
-const RUS   = 'Polly.Russell';
-const ADI   = 'Polly.Aditi';
-const RAV   = 'Polly.Raveena';
-const SAL   = 'Polly.Salli';
-const KEN   = 'Polly.Kendra';
-const KIM   = 'Polly.Kimberly';
-const JOE   = 'Polly.Joey';
-const JUS   = 'Polly.Justin';
-const EMM   = 'Polly.Emma';
-const ARR   = 'Polly.Aria';
-const CEL   = 'Polly.Celine';
-const VIC   = 'Polly.Vicki';
-const CON   = 'Polly.Conchita';
+
+// 5 voices — named by tone, not country
+const SMOOTH = 'Polly.Joanna';   // Warm & Flowing   — female US
+const DEEP   = 'Polly.Matthew';  // Low & Authoritative — male US
+const CRISP  = 'Polly.Amy';      // Sharp & Professional — female UK
+const MELLOW = 'Polly.Russell';  // Relaxed & Casual — male AU
+const SHARP  = 'Polly.Aria';     // Clear & Distinct  — female NZ
+
+// Legacy aliases so no script line needs changing (all map to one of the 5)
+const JO  = SMOOTH;  const SAL = SMOOTH;  const KEN = SMOOTH;
+const ADI = SMOOTH;  const RAV = SMOOTH;
+const MT  = DEEP;    const JOE = DEEP;    const JUS = DEEP;
+const AMY = CRISP;   const EMM = CRISP;   const KIM = CRISP;
+const CEL = CRISP;   const VIC = CRISP;   const CON = CRISP;
+const BRN = DEEP;
+const NIC = MELLOW;  const RUS = MELLOW;
+const ARR = SHARP;
 
 // Additional varied hold messages so every script sounds different
 const HOLD_SECURE = 'Thank you for your cooperation. Your response is being reviewed by our security team. Please remain on the line.';

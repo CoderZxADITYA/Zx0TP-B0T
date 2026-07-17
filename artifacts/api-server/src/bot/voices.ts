@@ -1,200 +1,105 @@
 /**
  * ZxOTP BOT — Voice definitions
  *
- * All voices are Amazon Polly voices delivered via Twilio <Say>.
- * Each script category has its own curated voice to sound authentic.
- * The preview sample is spoken aloud when the user clicks "Preview Voice".
+ * 5 voices, each completely different in tone, pitch, and accent.
+ * Named by how they sound — not by country.
+ * No Indian voices. All names reflect the voice character.
  */
 
 export interface VoiceDef {
-  id:      string;    // Polly voice ID passed to <Say voice="…">
-  label:   string;    // display name shown in menus
-  accent:  string;    // short accent description
+  id:      string;    // Amazon Polly voice ID passed to <Say voice="…">
+  label:   string;    // display name shown in menus (tone-based, not country)
+  accent:  string;    // tone description
   gender:  'M' | 'F';
-  sample:  string;    // TTS phrase played as preview
-  flag:    string;    // emoji flag
+  sample:  string;    // TTS phrase played on preview
+  flag:    string;    // tone emoji (not a country flag)
   best_for?: string;  // suggested use case
 }
 
 export const VOICES: VoiceDef[] = [
-  // ── US English (Female) ───────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. SMOOTH — Polly.Joanna
+  //    Warm, confident, flowing American female. Natural pacing.
+  //    Best for: banks, insurance, healthcare, general OTP.
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id:      'Polly.Joanna',
-    label:   'Joanna',
-    accent:  'US English',
+    label:   'Smooth',
+    accent:  'Warm & Flowing',
     gender:  'F',
-    flag:    '🇺🇸',
-    best_for: 'Banks, General',
-    sample:  'Hello, this is an automated security verification call from your financial institution. Please state the one-time code sent to your registered mobile number.',
+    flag:    '🎙',
+    best_for: 'Banks · Insurance · Healthcare',
+    sample:  'Hello, this is an automated security verification call. We have detected unusual activity on your account and need to verify your identity. Please state the one-time code sent to your registered device now.',
   },
-  {
-    id:      'Polly.Salli',
-    label:   'Salli',
-    accent:  'US English',
-    gender:  'F',
-    flag:    '🇺🇸',
-    best_for: 'Retail, E-Commerce',
-    sample:  'Hi there, this is a security alert from your account. We noticed unusual activity and need to verify your identity. Please provide your verification code now.',
-  },
-  {
-    id:      'Polly.Kendra',
-    label:   'Kendra',
-    accent:  'US English',
-    gender:  'F',
-    flag:    '🇺🇸',
-    best_for: 'Insurance, Finance',
-    sample:  'Good day. This is an automated call regarding your account security. Suspicious activity has been detected. Please enter the six-digit verification code sent to your device.',
-  },
-  {
-    id:      'Polly.Kimberly',
-    label:   'Kimberly',
-    accent:  'US English',
-    gender:  'F',
-    flag:    '🇺🇸',
-    best_for: 'Tech, Social Media',
-    sample:  'Hello. This is an important security notification. We have detected a login attempt from an unrecognized location. Please confirm your one-time passcode to secure your account.',
-  },
-  // ── US English (Male) ─────────────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. DEEP — Polly.Matthew
+  //    Low, authoritative, commanding American male. Projects trust.
+  //    Best for: banks, crypto, government, fraud prevention.
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id:      'Polly.Matthew',
-    label:   'Matthew',
-    accent:  'US English',
+    label:   'Deep',
+    accent:  'Low & Authoritative',
     gender:  'M',
-    flag:    '🇺🇸',
-    best_for: 'Banks, Crypto, Govt',
-    sample:  'Hello, this is an important security alert from your financial institution. Your immediate attention is required. Please state the six-digit code sent to your phone.',
+    flag:    '🔊',
+    best_for: 'Crypto · Government · Fraud Alerts',
+    sample:  'Hello. This is an important security alert. Your account has been flagged for suspicious activity. To protect your funds, please provide the six-digit verification code sent to your phone right now.',
   },
-  {
-    id:      'Polly.Joey',
-    label:   'Joey',
-    accent:  'US English',
-    gender:  'M',
-    flag:    '🇺🇸',
-    best_for: 'Crypto, Tech',
-    sample:  'This is an urgent security notification. We have detected suspicious access to your account from an unrecognized device. Provide the verification code to continue.',
-  },
-  {
-    id:      'Polly.Justin',
-    label:   'Justin',
-    accent:  'US English',
-    gender:  'M',
-    flag:    '🇺🇸',
-    best_for: 'General, Telecom',
-    sample:  'Hello, you have received an automated security call. Unusual activity has been flagged on your account. Please state your one-time passcode to verify your identity.',
-  },
-  // ── British English ───────────────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. CRISP — Polly.Amy
+  //    Precise, professional British female. Sharp and formal.
+  //    Best for: UK banks, fintech, corporate, payment platforms.
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id:      'Polly.Amy',
-    label:   'Amy',
-    accent:  'British English',
+    label:   'Crisp',
+    accent:  'Sharp & Professional',
     gender:  'F',
-    flag:    '🇬🇧',
-    best_for: 'UK Banks, Payment Platforms',
-    sample:  'Hello, this is a security notification from your bank. We have detected unusual activity on your account and require your immediate verification. Please provide the code sent to your registered mobile.',
+    flag:    '⚡',
+    best_for: 'Fintech · Payment Platforms · Corporate',
+    sample:  'Good day. This is a security notification from your financial institution. Suspicious activity has been detected on your account. Please provide the verification code sent to your registered mobile number to confirm your identity.',
   },
-  {
-    id:      'Polly.Emma',
-    label:   'Emma',
-    accent:  'British English',
-    gender:  'F',
-    flag:    '🇬🇧',
-    best_for: 'UK Banks, Insurance',
-    sample:  'Good day. This is an automated security alert. Suspicious activity has been flagged on your account. To protect your funds, please state the one-time verification code we sent you.',
-  },
-  {
-    id:      'Polly.Brian',
-    label:   'Brian',
-    accent:  'British English',
-    gender:  'M',
-    flag:    '🇬🇧',
-    best_for: 'UK Banks, Government',
-    sample:  'Hello, this is an important security call. We need to verify your identity before proceeding with this transaction. Please state the verification code sent to your registered number.',
-  },
-  // ── Australian English ─────────────────────────────────────────────────────
-  {
-    id:      'Polly.Nicole',
-    label:   'Nicole',
-    accent:  'Australian English',
-    gender:  'F',
-    flag:    '🇦🇺',
-    best_for: 'AU Banks',
-    sample:  'Hello, this is an automated security call. We have detected suspicious activity on your account and need to verify your identity. Please confirm your one-time passcode.',
-  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 4. MELLOW — Polly.Russell
+  //    Relaxed, easy-going Australian male. Friendly but clear.
+  //    Best for: telecom, retail, delivery, subscription services.
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id:      'Polly.Russell',
-    label:   'Russell',
-    accent:  'Australian English',
+    label:   'Mellow',
+    accent:  'Relaxed & Casual',
     gender:  'M',
-    flag:    '🇦🇺',
-    best_for: 'AU Banks, Telecom',
-    sample:  'G day. This is a security verification call from your financial institution. We have detected unusual login activity. Please enter your one-time code to confirm your identity.',
+    flag:    '🌊',
+    best_for: 'Telecom · Retail · Delivery Services',
+    sample:  'Hey there, this is an automated verification call. We noticed some unusual activity on your account and just need to confirm it is you. Please go ahead and enter your one-time verification code now.',
   },
-  // ── New Zealand English ────────────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5. SHARP — Polly.Aria
+  //    Clear, distinct, slightly edgy New Zealand female. Stands out.
+  //    Best for: tech companies, social media platforms, 2FA alerts.
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id:      'Polly.Aria',
-    label:   'Aria',
-    accent:  'New Zealand English',
+    label:   'Sharp',
+    accent:  'Clear & Distinct',
     gender:  'F',
-    flag:    '🇳🇿',
-    best_for: 'AU/NZ Banks',
-    sample:  'Hello, this is a security alert from your bank. Unusual activity has been detected on your account. Please provide the verification code sent to your registered mobile number.',
-  },
-  // ── Indian English ─────────────────────────────────────────────────────────
-  {
-    id:      'Polly.Aditi',
-    label:   'Aditi',
-    accent:  'Indian English',
-    gender:  'F',
-    flag:    '🇮🇳',
-    best_for: 'Indian Banks, Asian',
-    sample:  'Hello, this is an automated security alert. We have detected unusual activity and require your verification. Please provide the one-time password sent to your registered mobile number.',
-  },
-  {
-    id:      'Polly.Raveena',
-    label:   'Raveena',
-    accent:  'Indian English',
-    gender:  'F',
-    flag:    '🇮🇳',
-    best_for: 'South Asian Banks',
-    sample:  'Hello, this is a security notification. Please provide the one-time password sent to your registered mobile number to verify your identity and protect your account.',
-  },
-  // ── European ──────────────────────────────────────────────────────────────
-  {
-    id:      'Polly.Celine',
-    label:   'Céline',
-    accent:  'French',
-    gender:  'F',
-    flag:    '🇫🇷',
-    best_for: 'EU Banks, French',
-    sample:  'Hello, this is an automated security call from your bank. We have detected suspicious activity on your account. Please provide your one-time verification code.',
-  },
-  {
-    id:      'Polly.Vicki',
-    label:   'Vicki',
-    accent:  'German',
-    gender:  'F',
-    flag:    '🇩🇪',
-    best_for: 'EU Banks, German',
-    sample:  'Hello, this is an important security notification from your financial institution. Unusual activity has been detected. Please confirm your identity with the code sent to your mobile.',
-  },
-  {
-    id:      'Polly.Conchita',
-    label:   'Conchita',
-    accent:  'Spanish',
-    gender:  'F',
-    flag:    '🇪🇸',
-    best_for: 'Latin American Banks',
-    sample:  'Hello, this is a security verification call. We have detected suspicious activity on your account. Please provide the one-time code sent to your registered phone number.',
+    flag:    '🎯',
+    best_for: 'Tech · Social Media · 2FA Alerts',
+    sample:  'Hello. This is an automated security alert. A sign-in attempt was detected from an unrecognised device. Please state your verification code to confirm it was you, or stay on the line to speak with our security team.',
   },
 ];
 
-export const DEFAULT_VOICE = VOICES[0]!;
+export const DEFAULT_VOICE = VOICES[0]!; // Smooth (Polly.Joanna)
 
 export function getVoice(id: string): VoiceDef {
   return VOICES.find(v => v.id === id) ?? DEFAULT_VOICE;
 }
 
-// ── Per-user selected voice ────────────────────────────────────────────────────
+// ── Per-user selected voice ───────────────────────────────────────────────────
 const userVoice = new Map<number, string>();
 
 export function getUserVoice(chatId: number): string {

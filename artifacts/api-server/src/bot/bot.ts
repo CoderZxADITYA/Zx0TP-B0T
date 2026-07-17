@@ -573,7 +573,7 @@ function buildCmdGuideP2(): Msg {
 
     .emoji(E.ROBOT).sp().bold('SCRIPTS & VOICES').nl()
     .plain('  /scripts      ').italic('— browse 400+ built-in scripts').nl()
-    .plain('  /voices       ').italic('— 18 Amazon Polly voices').nl()
+    .plain('  /voices       ').italic('— 5 distinct voices (Smooth, Deep, Crisp, Mellow, Sharp)').nl()
     .plain('  /newscript    ').italic('— create custom script').nl()
     .plain('  /editscript   ').italic('— edit saved script').nl()
     .plain('  /deletescript ').italic('— remove script').nl()
