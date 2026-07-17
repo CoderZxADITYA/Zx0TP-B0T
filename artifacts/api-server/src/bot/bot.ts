@@ -181,18 +181,35 @@ function msgSend(
   return b.telegram.sendMessage(chatId, text, { entities: entities as any, ...extra }) as any;
 }
 
+// ── Telegram max message length ───────────────────────────────────────────────
+const TG_MAX = 4096;
+
+/** Truncate text to Telegram's 4096-char limit, appending an ellipsis if cut. */
+function tgTruncate(text: string): string {
+  if (text.length <= TG_MAX) return text;
+  return text.slice(0, TG_MAX - 1) + '…';
+}
+
 // ── Edit-in-place helper (falls back to send on failure) ──────────────────────
 
 async function editOrSend(
   ctx: any, b: Telegraf, m: Msg,
   extra: Record<string, unknown> = {},
 ): Promise<void> {
-  const { text, entities } = m.build();
+  const built = m.build();
+  const text  = tgTruncate(built.text);
+  // Re-filter entities that fall inside the (possibly truncated) text
+  const entities = built.entities.filter(e => e.offset + e.length <= text.length);
   try {
     await ctx.editMessageText(text, { entities: entities as any, ...extra });
-  } catch {
+  } catch (err: any) {
+    const desc: string = err?.description ?? '';
+    // "message is not modified" — nothing to do
+    if (desc.includes('message is not modified')) return;
     // edit failed (message too old, already deleted, etc.) — send fresh
-    await b.telegram.sendMessage(ctx.chat!.id, text, { entities: entities as any, ...extra });
+    try {
+      await b.telegram.sendMessage(ctx.chat!.id, text, { entities: entities as any, ...extra });
+    } catch { /* ignore — bot may have been blocked */ }
   }
 }
 
@@ -275,8 +292,12 @@ function buildPremiumRequired(): Msg {
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
-function gateCommand(b: Telegraf, userId: number | undefined, chatId: number, fn: () => void): void {
-  if (isAdmin(userId) || (userId && isPremium(userId))) { fn(); return; }
+function gateCommand(b: Telegraf, userId: number | undefined, chatId: number, fn: () => void | Promise<void>): void {
+  if (isAdmin(userId) || (userId && isPremium(userId))) {
+    // Ensure async callbacks surface errors via bot.catch instead of being silently dropped
+    Promise.resolve(fn()).catch((err) => logger.error({ err, chatId }, 'gateCommand callback error'));
+    return;
+  }
   const m = buildPremiumRequired();
   msgSend(b, chatId, m, {
     reply_markup: {
@@ -564,7 +585,7 @@ function registerCommands(b: Telegraf): void {
     const m = new Msg()
       .emoji(E.CHECK).sp().bold('Operation cancelled.').nl()
       .emoji(E.STAR).sp().italic('Send /call to start over.');
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
   });
 
   // /info ──────────────────────────────────────────────────────────────────────
@@ -582,13 +603,14 @@ function registerCommands(b: Telegraf): void {
 
   // Quick OTP from /start button ────────────────────────────────────────────────
   b.action('start_otp', async (ctx) => {
-    await ctx.answerCbQuery();
     const chatId = ctx.chat?.id ?? 0;
     const userId = ctx.from?.id;
+    // Check premium BEFORE answering the callback query — answerCbQuery can only be called once
     if (!isAdmin(userId) && !(userId && isPremium(userId))) {
       await ctx.answerCbQuery(`${E.LOCK.char} Premium required — /redeem KEY or /subscribe`, { show_alert: true });
       return;
     }
+    await ctx.answerCbQuery();
     resetFlow(chatId);
     const flow = getFlow(chatId);
     flow.deviceName = 'OTP';
@@ -652,11 +674,11 @@ function registerCommands(b: Telegraf): void {
   });
 
   // /IVRpass ───────────────────────────────────────────────────────────────────
-  b.command('IVRpass', (ctx) => {
+  b.command('IVRpass', async (ctx) => {
     const m = new Msg()
       .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
       .italic('Use while a call is active:');
-    msgSend(b, ctx.chat.id, m, {
+    await msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
           [btn.red('Hang Up',           'ivr_hangup',       E.RED),
@@ -732,11 +754,11 @@ function registerCommands(b: Telegraf): void {
 
   // /pgp — live call transfer (IVR panel) ───────────────────────────────────────
   b.command('pgp', (ctx) => {
-    gateCommand(b, ctx.from?.id, ctx.chat.id, () => {
+    gateCommand(b, ctx.from?.id, ctx.chat.id, async () => {
       const m = new Msg()
         .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
         .italic('Use while a call is active:');
-      msgSend(b, ctx.chat.id, m, {
+      await msgSend(b, ctx.chat.id, m, {
         reply_markup: {
           inline_keyboard: [
             [btn.red('Hang Up',          'ivr_hangup',      E.RED),
@@ -753,11 +775,11 @@ function registerCommands(b: Telegraf): void {
 
   // /dpgp — immediate IVR panel ─────────────────────────────────────────────────
   b.command('dpgp', (ctx) => {
-    gateCommand(b, ctx.from?.id, ctx.chat.id, () => {
+    gateCommand(b, ctx.from?.id, ctx.chat.id, async () => {
       const m = new Msg()
         .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
         .italic('Use while a call is active:');
-      msgSend(b, ctx.chat.id, m, {
+      await msgSend(b, ctx.chat.id, m, {
         reply_markup: {
           inline_keyboard: [
             [btn.red('Hang Up',          'ivr_hangup',      E.RED),
@@ -776,7 +798,7 @@ function registerCommands(b: Telegraf): void {
   b.command(
     ['deletescript', 'myscripts', 'newscript', 'editscript', 'custom', 'purchase'],
     (ctx) => {
-      gateCommand(b, ctx.from?.id, ctx.chat.id, () => {
+      gateCommand(b, ctx.from?.id, ctx.chat.id, async () => {
         const cmd = ctx.message.text.replace('/', '').split(' ')[0]!.toLowerCase();
         const desc: Record<string, string> = {
           deletescript: 'Use /deletescript to remove a custom script from your list.',
@@ -789,20 +811,20 @@ function registerCommands(b: Telegraf): void {
         const m = new Msg()
           .emoji(E.CHECK).sp().bi('Command Tip').nl(2)
           .plain(desc[cmd] ?? 'Command received.');
-        msgSend(b, ctx.chat.id, m);
+        await msgSend(b, ctx.chat.id, m);
       });
     },
   );
 
-  b.command(['support', 'language', 'setvoice'], (ctx) => {
+  b.command(['support', 'language', 'setvoice'], async (ctx) => {
     const m = new Msg().emoji(E.SHIELD).sp().plain('Contact the owner for this option:');
-    msgSend(b, ctx.chat.id, m, {
+    await msgSend(b, ctx.chat.id, m, {
       reply_markup: { inline_keyboard: [[btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)]] },
     });
   });
 
   // /redeem <KEY> ──────────────────────────────────────────────────────────────
-  b.command('redeem', (ctx) => {
+  b.command('redeem', async (ctx) => {
     const chatId = ctx.chat.id;
     const userId = ctx.from.id;
     const parts  = ctx.message.text.trim().split(/\s+/);
@@ -813,7 +835,7 @@ function registerCommands(b: Telegraf): void {
         .emoji(E.KEY).sp().bi('Redeem a License Key').nl(2)
         .emoji(E.STAR).sp().italic('Usage:').plain(' /redeem ZX-XXXX-XXXX-XXXX').nl(2)
         .blockquote(`Don't have a key? Buy one via ${OWNER_HANDLE}`);
-      msgSend(b, chatId, m, {
+      await msgSend(b, chatId, m, {
         reply_markup: { inline_keyboard: [[btn.gold('See Plans', 'subscription', E.CROWN)]] },
       });
       return;
@@ -829,7 +851,7 @@ function registerCommands(b: Telegraf): void {
       const m = new Msg()
         .emoji(E.CROSS).sp().bi('Redeem Failed').nl(2)
         .emoji(E.WARNING).sp().italic(reasonText[result.reason] ?? 'Unknown error.');
-      msgSend(b, chatId, m);
+      await msgSend(b, chatId, m);
       return;
     }
 
@@ -839,7 +861,7 @@ function registerCommands(b: Telegraf): void {
       .emoji(E.HOURGLASS).sp().italic(`Valid for ${formatDuration(result.license.durationMs)} from now.`).nl()
       .emoji(E.CROWN).sp().italic('All premium features are unlocked.').nl(2)
       .blockquote("You'll get a message here the moment it expires.");
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
   });
 
   b.action('redeem_prompt', async (ctx) => {
@@ -851,7 +873,7 @@ function registerCommands(b: Telegraf): void {
   });
 
   // /license ───────────────────────────────────────────────────────────────────
-  b.command('license', (ctx) => {
+  b.command('license', async (ctx) => {
     const userId  = ctx.from.id;
     const license = getUserLicense(userId);
     const left    = timeLeftMs(userId);
@@ -864,7 +886,7 @@ function registerCommands(b: Telegraf): void {
       m.emoji(E.CANCEL).sp().bi('License Status: None').nl(2)
         .emoji(E.KEY).sp().italic('Redeem a key with /redeem <KEY>');
     }
-    msgSend(b, ctx.chat.id, m);
+    await msgSend(b, ctx.chat.id, m);
   });
 
   // /setspoof — save a default caller ID ────────────────────────────────────────
@@ -1071,12 +1093,12 @@ function registerCommands(b: Telegraf): void {
   });
 
   // /proceed ───────────────────────────────────────────────────────────────────
-  b.command('proceed', (ctx) => {
+  b.command('proceed', async (ctx) => {
     const m = new Msg()
       .emoji(E.MONEY).sp().bi('Select Payment Method').nl(2)
       .emoji(E.CARD).sp().italic('Choose your wallet to make payment fast').nl(2)
       .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-    msgSend(b, ctx.chat.id, m, {
+    await msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
           [btn.gold('Bitcoin (BTC)', 'BTC', E.FIRE),
@@ -1100,13 +1122,13 @@ function registerCommands(b: Telegraf): void {
     const m = new Msg()
       .emoji(E.SPEAK).sp().bold('Admin Contact').nl(2)
       .plain('Click ').bold(OWNER_HANDLE).plain(' to chat with the admin for help and complaints.');
-    msgSend(b, ctx.chat.id, m, {
+    await msgSend(b, ctx.chat.id, m, {
       reply_markup: { inline_keyboard: [[btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)]] },
     });
   });
 
   // /more ──────────────────────────────────────────────────────────────────────
-  b.command('more', (ctx) => { msgSend(b, ctx.chat.id, buildMoreInfo()); });
+  b.command('more', async (ctx) => { await msgSend(b, ctx.chat.id, buildMoreInfo()); });
 
   // /scripts ─── Browse & select built-in scripts ──────────────────────────────
   b.command('scripts', async (ctx) => {
@@ -1399,6 +1421,15 @@ function registerMessageHandler(b: Telegraf): void {
     }
 
     // ── callCount === 0: target phone number ────────────────────────────────
+    if (flow.callCount === 0 && !checkNumber(text.replace(/[\s\-()]/g, ''))) {
+      // Invalid number — tell the user and wait for a valid one
+      await nextPrompt(new Msg()
+        .emoji(E.WARNING).sp().bold('Invalid phone number.').nl(2)
+        .italic('Must be in E.164 format, e.g. ').code('+12025551234').nl()
+        .italic('Include + and the country code, 7–15 digits total.'));
+      return;
+    }
+
     if (flow.callCount === 0 && checkNumber(text.replace(/[\s\-()]/g, ''))) {
       flow.VN = text.trim().replace(/[\s\-()]/g, '');
       const savedSpoof = userSpoofNum.get(chatId);
@@ -1499,7 +1530,7 @@ function registerMessageHandler(b: Telegraf): void {
         }
         try { await ctx.deleteMessage(); } catch { /* ignore */ }
         resetFlow(chatId);
-        msgSend(b, chatId, new Msg().emoji(E.CANCEL).sp().plain('Cancelled — /call to start over'));
+        await msgSend(b, chatId, new Msg().emoji(E.CANCEL).sp().plain('Cancelled — /call to start over'));
         return;
       }
 
@@ -1543,7 +1574,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
       .emoji(E.CANCEL).sp().bi('Call Failed — Twilio Not Configured').nl(2)
       .emoji(E.WARNING).sp().italic('SIGNALWIRE_PROJECT_ID, SIGNALWIRE_API_TOKEN and SIGNALWIRE_FROM_NUMBER must be set.').nl(2)
       .emoji(E.DIAMOND).plain(' Contact owner to configure: ').bold(OWNER_HANDLE);
-    msgSend(b, chatId, m, {
+    await msgSend(b, chatId, m, {
       reply_markup: { inline_keyboard: [[btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)]] },
     });
     return;
@@ -1576,7 +1607,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
       .emoji(E.ROBOT).plain(' Script: ').italic(scriptId ? getScriptName(chatId, scriptId) : 'Default').nl(2)
       .emoji(E.ANNOUNCE).sp().italic("I'll notify you the moment the callee speaks or enters digits.").nl(2)
       .emoji(E.TOOLS).sp().bold('Live Call Controls:');
-    msgSend(b, chatId, m, {
+    await msgSend(b, chatId, m, {
       reply_markup: {
         inline_keyboard: [
           [btn.red('Hang Up',           'hangup_now',      E.CANCEL),
@@ -1595,7 +1626,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
       .emoji(E.CROSS).sp().bold('Call failed to connect.').nl(2)
       .code(errMsg.slice(0, 300)).nl(2)
       .italic('Use /call to try again.');
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
   }
 }
 
@@ -1611,32 +1642,32 @@ async function handleAdminPromptReply(
     const m  = ok
       ? new Msg().emoji(E.CHECK).sp().bold(`License revoked for user ${targetId}.`)
       : new Msg().emoji(E.CROSS).sp().bold('No active license found for that user ID.');
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
 
   } else if (pending === 'ban') {
     const targetId = Number(text.trim());
     if (!Number.isFinite(targetId)) {
-      msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
+      await msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
       return;
     }
     banUser(targetId);
     dbSetBanned(targetId, true);
-    msgSend(b, chatId, new Msg().emoji(E.RED).sp().bold(`User ${targetId} has been banned.`));
+    await msgSend(b, chatId, new Msg().emoji(E.RED).sp().bold(`User ${targetId} has been banned.`));
 
   } else if (pending === 'unban') {
     const targetId = Number(text.trim());
     if (!Number.isFinite(targetId)) {
-      msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
+      await msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
       return;
     }
     unbanUser(targetId);
     dbSetBanned(targetId, false);
-    msgSend(b, chatId, new Msg().emoji(E.CHECK).sp().bold(`User ${targetId} has been unbanned.`));
+    await msgSend(b, chatId, new Msg().emoji(E.CHECK).sp().bold(`User ${targetId} has been unbanned.`));
 
   } else if (pending === 'search') {
     const targetId = Number(text.trim());
     if (!Number.isFinite(targetId)) {
-      msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
+      await msgSend(b, chatId, new Msg().emoji(E.CROSS).sp().plain('Invalid user ID.'));
       return;
     }
     const u    = getUser(targetId);
@@ -1657,13 +1688,13 @@ async function handleAdminPromptReply(
     } else {
       m.nl().emoji(E.CANCEL).plain(' No active license.');
     }
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
 
   } else if (pending === 'token') {
     const newToken = text.trim();
     // Basic token format validation
     if (!/^\d{8,12}:[A-Za-z0-9_-]{30,50}$/.test(newToken)) {
-      msgSend(b, chatId, new Msg()
+      await msgSend(b, chatId, new Msg()
         .emoji(E.CROSS).sp().bold('Invalid token format.').nl(2)
         .italic('Expected: 1234567890:ABCdef...').nl()
         .italic('Get your token from @BotFather on Telegram.').nl(2)
@@ -1681,13 +1712,13 @@ async function handleAdminPromptReply(
       .plain('Token received: ').code(masked).nl(2)
       .emoji(E.WARNING).sp().bold('This will replace the current bot token.').nl(2)
       .italic('Type ').bold('YES').italic(' to confirm and save, or ').bold('NO').italic(' to cancel:');
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
 
   } else if (pending === 'token_confirm') {
     const draft = tokenDraft.get(chatId);
     tokenDraft.delete(chatId);
     if (!draft || text.trim().toUpperCase() !== 'YES') {
-      msgSend(b, chatId, new Msg()
+      await msgSend(b, chatId, new Msg()
         .emoji(E.CANCEL).sp().bold('Token change cancelled.').nl(2)
         .italic('No changes were made. The existing token is still active.'));
       return;
@@ -1698,17 +1729,17 @@ async function handleAdminPromptReply(
       .emoji(E.LOCK).sp().italic('Token stored securely in database.').nl(2)
       .emoji(E.WARNING).sp().bold('Restart the API server to apply the new token.').nl(2)
       .blockquote('The bot will reconnect to Telegram with the new identity on next restart.');
-    msgSend(b, chatId, m);
+    await msgSend(b, chatId, m);
 
   } else if (pending === 'setspoof_admin') {
     const num = text.trim();
     if (!num.startsWith('+') || !/^\+\d{7,15}$/.test(num.replace(/[\s\-()]/g, ''))) {
-      msgSend(b, chatId, new Msg()
+      await msgSend(b, chatId, new Msg()
         .emoji(E.WARNING).sp().plain('Invalid format. Must start with + and country code, e.g. +12025551234'));
       return;
     }
     userSpoofNum.set(chatId, num);
-    msgSend(b, chatId, new Msg()
+    await msgSend(b, chatId, new Msg()
       .emoji(E.CHECK).sp().bold('Default caller ID saved!').nl(2)
       .emoji(E.GLOBE).plain(' Spoof: ').code(num));
 
@@ -1723,8 +1754,10 @@ async function handleAdminPromptReply(
         await b.telegram.sendMessage(u.chatId, t, { entities: entities as any });
         sent++;
       } catch { /* user may have blocked */ }
+      // Telegram allows ~30 msg/s to different chats; sleep 35 ms between sends to avoid FloodWait
+      await new Promise(r => setTimeout(r, 35));
     }
-    msgSend(b, chatId, new Msg().emoji(E.CHECK).sp().bold(`Broadcast sent to ${sent}/${users.length} users.`));
+    await msgSend(b, chatId, new Msg().emoji(E.CHECK).sp().bold(`Broadcast sent to ${sent}/${users.length} users.`));
   }
 }
 
@@ -2252,8 +2285,14 @@ function registerActions(b: Telegraf): void {
     await ctx.answerCbQuery();
     await gateAction(ctx, async () => {
       const scriptId = ctx.match[1]!;
+      const chatId   = ctx.chat?.id ?? 0;
       const s = getScript(scriptId);
-      if (!s) { await ctx.answerCbQuery('Script not found', { show_alert: true }); return; }
+      if (!s) {
+        // answerCbQuery was already called above — send a message instead
+        const { text, entities } = new Msg().emoji(E.CROSS).sp().plain('Script not found.').build();
+        await b.telegram.sendMessage(chatId, text, { entities: entities as any }).catch(() => { /* ignore */ });
+        return;
+      }
       const m = new Msg()
         .emoji(E.STAR).sp().bi(s.name).nl(2)
         .emoji(E.GLOBE).plain(' Company: ').bold(s.company).plain(` [${s.country}]`).nl()
@@ -2382,8 +2421,9 @@ function registerActions(b: Telegraf): void {
   b.action(/^voice_preview:(.+)$/, async (ctx) => {
     const voiceId = ctx.match[1]!;
     const chatId  = ctx.chat?.id ?? 0;
-    await ctx.answerCbQuery('Generating voice preview…');
+    // Gate BEFORE answering — gateAction calls answerCbQuery if user is not premium
     await gateAction(ctx, async () => {
+      await ctx.answerCbQuery('Generating voice preview…');
       const v = getVoice(voiceId);
       try {
         // Use google-tts-api for instant preview (no auth required)
@@ -2643,19 +2683,20 @@ function registerActions(b: Telegraf): void {
     if (session) {
       try {
         const voiceUrl = `${webhookBase()}/voice`;
-        const newSid   = await makeCall(session.phone, voiceUrl);
+        // Pass the original spoofNum so the retry uses the same caller ID
+        const newSid   = await makeCall(session.phone, voiceUrl, session.spoofNum);
         const scriptId = session.scriptId;
         clearSession(chatId);
-        createSession(chatId, session.phone, newSid, scriptId);
+        createSession(chatId, session.phone, newSid, scriptId, session.callMode, session.spoofNum);
         logCall({ chatId, mode: 'RETRY', phone: session.phone, callSid: newSid, status: 'initiated', ts: Date.now() });
         const m2 = new Msg().emoji(E.PHONE).sp().bold(`Calling ${session.phone} again…`);
         const { text, entities } = m2.build();
-        b.telegram.sendMessage(chatId, text, { entities: entities as any });
+        b.telegram.sendMessage(chatId, text, { entities: entities as any }).catch(() => { /* user may have blocked */ });
       } catch (err) {
         logger.error({ err }, 'makeCall failed on deny retry');
         const m3 = new Msg().emoji(E.CROSS).sp().plain('Retry failed. Use /call to try again.');
         const { text, entities } = m3.build();
-        b.telegram.sendMessage(chatId, text, { entities: entities as any });
+        b.telegram.sendMessage(chatId, text, { entities: entities as any }).catch(() => { /* user may have blocked */ });
       }
     }
   });
@@ -2697,6 +2738,13 @@ export async function startBot(): Promise<void> {
     return;
   }
 
+  // Stop any previously running bot instance (e.g. on admin hot-reload) before
+  // creating a new one — otherwise two polling loops run simultaneously.
+  if (bot) {
+    try { bot.stop('REINIT'); } catch { /* ignore */ }
+    bot = null;
+  }
+
   bot = new Telegraf(token);
 
   // ── Global middleware ───────────────────────────────────────────────────────
@@ -2736,6 +2784,7 @@ export async function startBot(): Promise<void> {
     try {
       await ctx.reply(`${E.TOOLS.char} Bot is currently under maintenance. Please try again later.\n\n${E.DIAMOND.char} Contact: ${OWNER_HANDLE}`);
     } catch { /* ignore */ }
+    return; // do not call next() — block the request during maintenance
   });
 
   registerCommands(bot);
@@ -2761,11 +2810,11 @@ export async function startBot(): Promise<void> {
 
   // Sweep expired licenses every minute
   setInterval(() => {
-    sweepExpired((userId) => {
+    sweepExpired((userId, license) => {
       if (!bot) return;
-      // Persist the expiry flags so sweep is idempotent across restarts
-      const expiredLic = getUserLicense(userId);
-      if (expiredLic) dbUpsertLicense({ ...expiredLic, active: false, notifiedExpiry: true });
+      // Use the license reference passed by sweepExpired — activeKeyByUser has
+      // already been cleared by this point, so getUserLicense(userId) returns undefined.
+      dbUpsertLicense({ ...license, active: false, notifiedExpiry: true });
       const m = new Msg()
         .emoji(E.CANCEL).sp().bi('License Expired').nl(2)
         .emoji(E.WARNING).sp().italic("Your license has ended — you can't use premium features anymore.").nl(2)
@@ -2794,9 +2843,15 @@ export async function notifyUser(
     return;
   }
 
+  // Truncate transcription so the overall message never exceeds Telegram's 4096-char limit
+  const MAX_TRANSCRIPTION = 1800;
+  const safeTranscription = transcription.length > MAX_TRANSCRIPTION
+    ? transcription.slice(0, MAX_TRANSCRIPTION) + '…'
+    : transcription;
+
   const m = new Msg()
     .emoji(E.ANNOUNCE).sp().bi('Callee responded:').nl(2)
-    .blockquote(`"${transcription}"`).nl(2)
+    .blockquote(`"${safeTranscription}"`).nl(2)
     .emoji(E.STAR).sp().bold('Approve to end call · Deny to call again').nl(2)
     .emoji(E.TOOLS).sp().italic('Live controls still active below ↓');
   const { text, entities } = m.build();

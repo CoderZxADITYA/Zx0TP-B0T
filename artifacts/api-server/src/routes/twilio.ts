@@ -140,10 +140,15 @@ router.post('/gather', async (req: Request, res: Response) => {
     return;
   }
 
-  // Format the captured input for Telegram notification
-  const displayInput = dtmfDigits
+  // Format the captured input for Telegram notification.
+  // Truncate at 1800 chars so the full Telegram message stays under 4096.
+  const MAX_INPUT_LEN = 1800;
+  const rawInput = dtmfDigits
     ? `🔢 Digits entered: ${dtmfDigits}`
     : `🗣 Spoken response: "${speechResult}"`;
+  const displayInput = rawInput.length > MAX_INPUT_LEN
+    ? rawInput.slice(0, MAX_INPUT_LEN) + '…'
+    : rawInput;
 
   updateSession(callSid, { status: 'awaiting_decision', transcription: displayInput });
 

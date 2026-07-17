@@ -106,14 +106,21 @@ export function hydrateLicense(l: License): void {
   }
 }
 
-export function sweepExpired(notify: (userId: number) => void): void {
+/**
+ * Sweep expired licenses and invoke notify for each one.
+ * The license reference is passed directly to the callback so callers
+ * can persist the final state — by the time notify() runs,
+ * activeKeyByUser has already been cleared for that user.
+ */
+export function sweepExpired(notify: (userId: number, license: License) => void): void {
   const now = Date.now();
   for (const l of licensesByKey.values()) {
     if (l.active && l.redeemedBy && l.expiresAt && l.expiresAt <= now && !l.notifiedExpiry) {
       l.active         = false;
       l.notifiedExpiry = true;
-      activeKeyByUser.delete(l.redeemedBy);
-      notify(l.redeemedBy);
+      const userId = l.redeemedBy; // capture before mutation
+      activeKeyByUser.delete(userId);
+      notify(userId, l);
     }
   }
 }
