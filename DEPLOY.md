@@ -1,162 +1,220 @@
-# ZxOTP BOT — Deployment Guide
+# 🚀 Deployment Guide — ZxOTP Bot
 
-Complete guide: Render free plan + Railway PostgreSQL + cron job for 24/7 uptime.
-
----
-
-## 1. Set up the Database on Railway
-
-### Steps
-1. Go to [railway.app](https://railway.app) → **New Project** → **Provision PostgreSQL**
-2. Click the **PostgreSQL** service → **Variables** tab
-3. Copy the value of **DATABASE_URL** (starts with `postgresql://`)
-4. Keep this tab open — you'll paste it into Render in the next step
-
-> Railway free tier gives 500 MB storage and 5 GB outbound data/month — enough for the bot.
+Simple step-by-step guide to deploy your bot on **Render** (free hosting) with **Railway** (free database) and **SignalWire** (cheap calls).
 
 ---
 
-## 2. Deploy the API Server on Render
+## What You Need
 
-### Steps
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub repo: `CoderZxADITYA/Zx0TP-B0T`
-3. Fill in the settings:
-
-| Field | Value |
-|---|---|
-| **Name** | `zxotp-bot` |
-| **Region** | Oregon (US West) or Frankfurt |
-| **Branch** | `main` |
-| **Root Directory** | `artifacts/api-server` |
-| **Runtime** | Node |
-| **Build Command** | `npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build` |
-| **Start Command** | `node dist/index.mjs` |
-| **Plan** | Free |
-
-4. Click **Environment** → **Add Environment Variable** for each:
-
-| Key | Value |
-|---|---|
-| `TELEGRAM_BOT_TOKEN` | Your token from @BotFather |
-| `DATABASE_URL` | Paste the Railway URL from Step 1 |
-| `SESSION_SECRET` | Any long random string (32+ chars) |
-| `TWILIO_ACCOUNT_SID` | Your Twilio Account SID |
-| `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token |
-| `TWILIO_PHONE_NUMBER` | Your Twilio phone number e.g. `+15005550006` |
-| `NODE_ENV` | `production` |
-
-5. Click **Create Web Service** → wait for the first deploy to finish (~3-5 min)
-6. Copy your Render URL e.g. `https://zxotp-bot.onrender.com`
-
-### DB tables are created automatically
-The bot runs `CREATE TABLE IF NOT EXISTS` at startup — no manual migration needed.
+| Thing | Where | Cost |
+|---|---|---|
+| **Render** account | render.com | Free |
+| **Railway** account | railway.app | Free (500 hrs/month) |
+| **SignalWire** account | signalwire.com | Free ($5 credit given on signup) |
+| **GitHub** repo | github.com | Free |
+| **cron-job.org** account | cron-job.org | Free |
 
 ---
 
-## 3. Configure the Twilio Webhook
+## Step 1 — Push Code to GitHub
 
-After the first successful deploy, set the Twilio webhook URLs:
+You need your code on GitHub so Render can deploy it automatically.
 
-1. Go to [twilio.com/console](https://twilio.com/console) → **Phone Numbers**
-2. Click your number → **Voice Configuration**
-3. Set **A call comes in** → **Webhook** → `https://zxotp-bot.onrender.com/api/twilio/voice`
-4. Save
-
-All Twilio sub-routes are handled automatically:
-- `/api/twilio/voice` — incoming call TwiML
-- `/api/twilio/gather` — OTP transcript
-- `/api/twilio/dtmf` — keypad input
-- `/api/twilio/status` — call status callbacks
-- `/api/twilio/hold` — hold music
-- `/api/twilio/transfer` — live transfer
-
----
-
-## 4. Keep the Bot Running 24/7 (cron job)
-
-Render free plan **spins down** the server after 15 minutes of inactivity. A cron job pings it every 10 minutes to prevent sleep.
-
-### Option A — cron-job.org (recommended, free)
-1. Go to [cron-job.org](https://cron-job.org) → **Sign up free**
-2. Click **Create Cronjob**
-3. Fill in:
-   - **URL:** `https://zxotp-bot.onrender.com/health`
-   - **Schedule:** Every 10 minutes (`*/10 * * * *`)
-   - **Request method:** GET
-4. Save → Enable
-
-### Option B — UptimeRobot (free)
-1. Go to [uptimerobot.com](https://uptimerobot.com) → **New Monitor**
-2. **Monitor Type:** HTTP(s)
-3. **URL:** `https://zxotp-bot.onrender.com/health`
-4. **Monitoring Interval:** 5 minutes
-5. Save → the bot stays alive indefinitely
-
-> The `/health` route is already registered and returns `{"status":"ok"}`.
-
----
-
-## 5. Verify Everything Works
-
-After deploy + cron setup:
-
-```
-# Check server health
-curl https://zxotp-bot.onrender.com/health
-
-# Expected: {"status":"ok","uptime":...}
-```
-
-Then in Telegram:
-1. Open your bot
-2. Send `/start` — you should see the welcome screen
-3. Send `/admin` — you should see the admin panel (owner only)
-
----
-
-## 6. Set the Bot Token via Telegram (in-bot secure box)
-
-You can change the bot token without touching Render:
-
-1. Send `/admin` in Telegram (as the owner)
-2. Tap **🔑 Change Token**
-3. Paste the new token from @BotFather
-4. Bot will show the masked token — type `YES` to confirm
-5. **Restart the Render service** (Dashboard → Manual Deploy or click Restart)
-
----
-
-## 7. Update the Bot (push new code)
+Run these commands in your **Replit shell**:
 
 ```bash
-git push origin main
+# First time only — add your GitHub repo as remote
+git remote add origin https://github.com/YOURNAME/YOURREPO.git
+
+# Push your code
+git push -u origin main
 ```
 
-Render auto-deploys on every push to `main`. You can also trigger a manual deploy from the Render dashboard.
+> If you get a permission error, create a **Personal Access Token** on GitHub:
+> Settings → Developer Settings → Personal Access Tokens → Generate new token (classic)
+> Give it `repo` scope. Use it as your password when git asks.
 
 ---
 
-## Architecture Summary
+## Step 2 — Set Up Railway Database
+
+Railway gives you a free PostgreSQL database. Your bot auto-creates all tables on startup — you don't need to do anything else.
+
+1. Go to **railway.app** → sign up
+2. Click **New Project** → **Deploy PostgreSQL**
+3. Once it's created, click the **PostgreSQL** service
+4. Go to the **Connect** tab
+5. Copy the **Public URL** — it looks like:
+   ```
+   postgresql://postgres:PASSWORD@roundhouse.proxy.rlwy.net:PORT/railway
+   ```
+6. **Save this URL** — you'll need it in Step 3.
+
+> 💡 Free plan gives 500 hours/month and 1 GB storage — more than enough for this bot.
+
+---
+
+## Step 3 — Get a Free SignalWire Number
+
+SignalWire gives you **$5.00 free credit** on signup. A US number costs **$1/month**, so you get 5 months free.
+
+### Sign up and get credentials:
+
+1. Go to **signalwire.com** → Create account
+2. Pick a **Space name** (e.g. `myzxotp`) — this becomes your Space URL:
+   `myzxotp.signalwire.com`
+3. Go to **Phone Numbers** → **Get a Number**
+4. Search by area code → pick any number → **Buy** (uses $1 from your free credit)
+5. The number you bought (e.g. `+12025551234`) → this is `SIGNALWIRE_FROM_NUMBER`
+
+### Get your API credentials:
+
+1. In your SignalWire dashboard → left sidebar → **API**
+2. Copy your **Project ID** → this is `SIGNALWIRE_PROJECT_ID`
+3. Create a new **API Token** → copy it → this is `SIGNALWIRE_API_TOKEN`
+4. Your Space URL (e.g. `myzxotp.signalwire.com`) → this is `SIGNALWIRE_SPACE_URL`
+
+### Point the number at your bot:
+
+*(Do this after Step 4 so you have your Render URL)*
+
+1. Click your phone number → **Edit**
+2. Under **Voice & Fax** → set **Handle Calls Using** → `LaML Webhooks`
+3. Set **When a call comes in** (POST) to:
+   ```
+   https://YOUR-APP.onrender.com/api/twilio/voice
+   ```
+4. Save
+
+---
+
+## Step 4 — Deploy on Render
+
+### Create the Web Service:
+
+1. Go to **render.com** → sign up → **New** → **Web Service**
+2. Connect your GitHub account → select your repo
+3. Fill in these settings:
+
+| Setting | Value |
+|---|---|
+| **Root Directory** | `artifacts/api-server` |
+| **Runtime** | Node |
+| **Build Command** | `npm install -g pnpm && pnpm install && pnpm --filter @workspace/db run build && pnpm --filter @workspace/api-server run build` |
+| **Start Command** | `node --enable-source-maps ./dist/index.mjs` |
+| **Plan** | Free |
+
+### Add Environment Variables:
+
+Go to **Environment** tab and add all of these:
 
 ```
-Telegram ──► Render (Node.js API server)
-                ├── Telegraf bot (long polling)
-                ├── Twilio webhooks (Express routes)
-                └── PostgreSQL on Railway (optional — in-memory fallback)
+BOT_TOKEN               = your Telegram bot token (from @BotFather)
+SESSION_SECRET          = any random string of 32+ characters
+DATABASE_URL            = the Railway URL you copied in Step 2
+SIGNALWIRE_PROJECT_ID   = from SignalWire API page
+SIGNALWIRE_API_TOKEN    = from SignalWire API page
+SIGNALWIRE_SPACE_URL    = e.g. myzxotp.signalwire.com
+SIGNALWIRE_FROM_NUMBER  = your SignalWire number e.g. +12025551234
+NODE_ENV                = production
+PUBLIC_URL              = https://YOUR-APP-NAME.onrender.com
+```
 
-cron-job.org ──► GET /health every 10 min ──► keeps Render awake
+> ⚠️ **`PUBLIC_URL` is critical** — SignalWire sends call events to this URL. Get your Render app URL from the top of the service page and paste it here **before** deploying.
+
+Click **Create Web Service** → Render will build and deploy automatically.
+
+> ✅ The bot creates all database tables automatically on first startup. No manual SQL needed.
+
+---
+
+## Step 5 — Keep the Bot Awake (Cron Job)
+
+Render's free plan **pauses your app** after 15 minutes of no traffic. This would stop your bot. Fix it for free using **cron-job.org**.
+
+1. Go to **cron-job.org** → sign up → **Create Cronjob**
+2. Set **URL** to:
+   ```
+   https://YOUR-APP-NAME.onrender.com/
+   ```
+3. Set schedule to **every 10 minutes**:
+   - Select "Every day" → set interval to 10 minutes
+4. Enable → **Create**
+
+That's it — the pinger keeps your app awake 24/7 for free.
+
+---
+
+## Step 6 — After First Deploy: Point SignalWire at Your URL
+
+Now that you have your Render URL, go back to your SignalWire number settings (Step 3 → "Point the number") and set the webhook URL to:
+
+```
+https://YOUR-APP-NAME.onrender.com/api/twilio/voice
 ```
 
 ---
 
-## Troubleshooting
+## ✅ Everything Should Work Now
+
+Your bot flow end-to-end:
+
+```
+Telegram operator sends /call command
+       ↓
+Render server places call via SignalWire REST API
+       ↓
+Target's phone rings (shows your SignalWire number or spoof number)
+       ↓
+Target answers → SignalWire calls your webhook at /api/twilio/voice
+       ↓
+Bot plays TTS script, gathers OTP via voice or keypad
+       ↓
+Result sent back to Telegram operator
+       ↓
+Operator presses IVR buttons to hold / transfer / hang up
+```
+
+---
+
+## 🔁 Updating the Bot
+
+Every time you push code to GitHub, Render auto-deploys:
+
+```bash
+git add -A
+git commit -m "your change description"
+git push
+```
+
+Render builds and redeploys in ~2 minutes. Bot stays live with zero downtime.
+
+---
+
+## 🛠️ Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| Bot not responding | Check Render logs — is `TELEGRAM_BOT_TOKEN` set? |
-| Calls not working | Check `TWILIO_*` env vars + webhook URL in Twilio console |
-| DB errors in logs | Check `DATABASE_URL` is the full Railway connection string |
-| Render spins down | Make sure cron-job.org / UptimeRobot is pinging `/health` |
-| "Tables not found" | Delete and re-add `DATABASE_URL` in Render — bot auto-creates tables |
-| New token not active | After saving token in Telegram, restart the Render service |
+| Bot not responding in Telegram | Check Render logs → look for startup errors |
+| Calls not going through | Make sure all 4 SIGNALWIRE_* env vars are set correctly |
+| Calls going through but no webhook received | Check PUBLIC_URL is set to your exact Render URL (no trailing slash) |
+| Database errors on startup | Check DATABASE_URL is the Railway **public** URL, not the internal one |
+| App keeps sleeping | Make sure cron-job.org is pinging every 10 minutes |
+| SignalWire number not working | Check the number's webhook URL is pointing to your Render URL |
+
+---
+
+## 📋 Environment Variables Quick Reference
+
+```
+BOT_TOKEN               → @BotFather in Telegram
+SESSION_SECRET          → any random string (e.g. generate at randomkeygen.com)
+DATABASE_URL            → Railway → PostgreSQL → Connect → Public URL
+SIGNALWIRE_PROJECT_ID   → SignalWire → API → Project ID
+SIGNALWIRE_API_TOKEN    → SignalWire → API → Create Token
+SIGNALWIRE_SPACE_URL    → yourspace.signalwire.com (no https://)
+SIGNALWIRE_FROM_NUMBER  → your SignalWire DID in E.164 e.g. +12025551234
+SIGNALWIRE_SPOOF_NUMBER → optional — default spoof caller ID
+NODE_ENV                → production
+PUBLIC_URL              → https://your-app-name.onrender.com
+```
