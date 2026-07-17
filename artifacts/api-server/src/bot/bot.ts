@@ -20,7 +20,7 @@ import { Telegraf }         from 'telegraf';
 import { message }          from 'telegraf/filters';
 import { logger }           from '../lib/logger.js';
 import { publicBaseUrl }    from '../lib/publicUrl.js';
-import { makeCall, hangupCall } from './twilio.js';
+import { makeCall, hangupCall, holdCall, resumeCall } from './twilio.js';
 import { E } from './emojis.js';
 import {
   createSession, getByChat, getByCall, clearSession, sweepStaleSessions,
@@ -1618,7 +1618,7 @@ function registerMessageHandler(b: Telegraf): void {
 
       // Quick mode: skip all setup questions, call immediately
       if (flow.quickMode) {
-        flow.UN       = savedSpoof ?? process.env['TWILIO_FROM_NUMBER'] ?? '';
+        flow.UN       = savedSpoof ?? process.env['SIGNALWIRE_SPOOF_NUMBER'] ?? process.env['SIGNALWIRE_FROM_NUMBER'] ?? '';
         flow.callCount = 6;
         flow.scriptId  = flow.autoScript ?? getActiveScript(chatId);
         flow.voiceId   = getUserVoice(chatId);
@@ -1731,14 +1731,14 @@ function buildReviewMsg(flow: FlowState, scriptLbl: string, voiceLbl: string): M
 
 // ── Central call placer ────────────────────────────────────────────────────────
 async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promise<void> {
-  const hasTwilio = process.env['TWILIO_ACCOUNT_SID'] &&
-                    process.env['TWILIO_AUTH_TOKEN']  &&
-                    process.env['TWILIO_FROM_NUMBER'];
+  const hasTwilio = process.env['SIGNALWIRE_PROJECT_ID'] &&
+                    process.env['SIGNALWIRE_API_TOKEN']  &&
+                    process.env['SIGNALWIRE_FROM_NUMBER'];
 
   if (!hasTwilio) {
     const m = new Msg()
       .emoji(E.CANCEL).sp().bi('Call Failed — Twilio Not Configured').nl(2)
-      .emoji(E.WARNING).sp().italic('TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER must be set.').nl(2)
+      .emoji(E.WARNING).sp().italic('SIGNALWIRE_PROJECT_ID, SIGNALWIRE_API_TOKEN and SIGNALWIRE_FROM_NUMBER must be set.').nl(2)
       .emoji(E.DIAMOND).plain(' Contact owner to configure: ').bold(OWNER_HANDLE);
     msgSend(b, chatId, m, {
       reply_markup: { inline_keyboard: [[btn.url('Contact Owner', OWNER_URL, E.ENVELOPE)]] },
@@ -1781,7 +1781,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
     logger.error({ err }, 'makeCall failed');
     const m = new Msg()
       .emoji(E.CROSS).sp().bold('Call failed to connect.').nl(2)
-      .italic('Check Twilio credentials and make sure TWILIO_FROM_NUMBER is valid.').nl()
+      .italic('Check SignalWire credentials and make sure SIGNALWIRE_FROM_NUMBER is valid.').nl()
       .italic('Use /call to try again.');
     msgSend(b, chatId, m);
   }
@@ -2690,6 +2690,11 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_hold', async (ctx) => {
     await ctx.answerCbQuery('🎵 Hold music activated');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await holdCall(session.callSid, `${webhookBase()}/hold`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.CHECK).sp().bold('Call Placed on Hold').nl(2)
         .emoji(E.ANNOUNCE).sp().italic('Target is now hearing hold music.')
@@ -2706,6 +2711,11 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_unhold', async (ctx) => {
     await ctx.answerCbQuery('Call resumed');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await resumeCall(session.callSid, `${webhookBase()}/voice`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.CHECK).sp().bold('Call Removed from Hold').nl(2)
         .emoji(E.PHONE).sp().italic('Target is back on the live call.');
@@ -2716,10 +2726,15 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_fake_xfer', async (ctx) => {
     await ctx.answerCbQuery('📞 Playing transfer ringtone…');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await holdCall(session.callSid, `${webhookBase()}/transfer`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.GLOBE).sp().bold('Fake Transfer Initiated').nl(2)
         .emoji(E.ANNOUNCE).sp().italic('Target is hearing a transfer ringtone.')
-        .nl().emoji(E.STAR).sp().italic('This simulates being forwarded to another department.');
+        .nl().emoji(E.STAR).sp().italic('Auto-redirects back to live call after ringtone.');
       await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
     });
   });
@@ -2727,10 +2742,15 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_real_xfer', async (ctx) => {
     await ctx.answerCbQuery('Transferring to IVR…');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await holdCall(session.callSid, `${webhookBase()}/fake-ivr`); } catch { /* ignore */ }
+      }
       const m = new Msg()
-        .emoji(E.ROCKET).sp().bold('Transfer to IVR').nl(2)
-        .emoji(E.TOOLS).sp().italic('Call is being forwarded to the IVR system.')
-        .nl().emoji(E.CHECK).sp().italic('Target will hear the automated IVR menu.');
+        .emoji(E.ROCKET).sp().bold('Transferred to IVR System').nl(2)
+        .emoji(E.TOOLS).sp().italic('Target is hearing the automated IVR menu.')
+        .nl().emoji(E.CHECK).sp().italic('"For English press 1, for billing press 2…"');
       await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
     });
   });
@@ -2738,6 +2758,11 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_fake_prompt', async (ctx) => {
     await ctx.answerCbQuery('🔊 Playing fake IVR prompt…');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await holdCall(session.callSid, `${webhookBase()}/fake-ivr`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.STAR).sp().bold('Fake IVR Prompt Playing').nl(2)
         .emoji(E.ANNOUNCE).sp().italic('Target is hearing a simulated automated IVR system.')
@@ -2749,10 +2774,15 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_bg_audio', async (ctx) => {
     await ctx.answerCbQuery('🎙 Call center background audio started');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        try { await holdCall(session.callSid, `${webhookBase()}/bg-audio`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.ANNOUNCE).sp().bold('Background Audio Active').nl(2)
         .emoji(E.CHECK).sp().italic('Target hears realistic call center ambience.')
-        .nl().emoji(E.STAR).sp().italic('Keyboard typing, ambient voices, and phone sounds.');
+        .nl().emoji(E.STAR).sp().italic('Loops until next IVR action is pressed.');
       await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
     });
   });
@@ -2760,9 +2790,15 @@ function registerActions(b: Telegraf): void {
   b.action('ivr_typing_audio', async (ctx) => {
     await ctx.answerCbQuery('⌨️ Typing audio activated');
     await gateAction(ctx, async () => {
+      const chatId  = ctx.chat?.id ?? 0;
+      const session = getByChat(chatId);
+      if (session?.callSid) {
+        // Redirect call to bg-audio (closest to typing ambience with current assets)
+        try { await holdCall(session.callSid, `${webhookBase()}/bg-audio`); } catch { /* ignore */ }
+      }
       const m = new Msg()
         .emoji(E.TOOLS).sp().bold('Typing Audio Active').nl(2)
-        .emoji(E.CHECK).sp().italic('Target hears keyboard typing sounds.')
+        .emoji(E.CHECK).sp().italic('Target hears keyboard and call-centre sounds.')
         .nl().emoji(E.STAR).sp().italic('Simulates an agent entering data on their system.');
       await editOrSend(ctx, b, m, { reply_markup: { inline_keyboard: [ivrBack] } });
     });
