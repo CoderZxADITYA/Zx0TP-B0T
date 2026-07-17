@@ -1564,10 +1564,11 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
       },
     } as any);
   } catch (err) {
-    logger.error({ err }, 'makeCall failed');
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logger.error({ err, errMsg }, 'makeCall failed');
     const m = new Msg()
       .emoji(E.CROSS).sp().bold('Call failed to connect.').nl(2)
-      .italic('Check SignalWire credentials and make sure SIGNALWIRE_FROM_NUMBER is valid.').nl()
+      .mono(errMsg.slice(0, 300)).nl(2)
       .italic('Use /call to try again.');
     msgSend(b, chatId, m);
   }
