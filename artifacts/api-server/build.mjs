@@ -100,6 +100,9 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      "telegraf",
+      "telegraf/filters",
+      "twilio",
     ],
     sourcemap: "linked",
     plugins: [
