@@ -2,18 +2,40 @@ services:
   - type: web
     name: zxotp-bot
     runtime: node
-    buildCommand: "npm install -g pnpm@10 && pnpm install && pnpm --filter @workspace/api-server run build"
-    startCommand: "node artifacts/api-server/dist/index.mjs"
+    buildCommand: "npx --yes pnpm@10 install && npx --yes pnpm@10 --filter @workspace/api-server run build"
+    startCommand: "node --enable-source-maps artifacts/api-server/dist/index.mjs"
     healthCheckPath: /api/healthz
     envVars:
       - key: NODE_ENV
         value: production
+
+      # ── Telegram ──────────────────────────────────────────────────────────────
       - key: TELEGRAM_BOT_TOKEN
         sync: false      # fill in Render dashboard — never commit this
+      - key: BOT_TOKEN
+        sync: false      # legacy alias — set to the same value as TELEGRAM_BOT_TOKEN
+
+      # ── Database ──────────────────────────────────────────────────────────────
       - key: DATABASE_URL
-        sync: false      # paste Railway PostgreSQL URL
+        sync: false      # paste Railway / Neon / Supabase PostgreSQL URL
+
+      # ── Auth / admin ──────────────────────────────────────────────────────────
       - key: SESSION_SECRET
         generateValue: true   # Render auto-generates a random secret
+
+      # ── SignalWire (primary telephony provider) ───────────────────────────────
+      - key: SIGNALWIRE_PROJECT_ID
+        sync: false
+      - key: SIGNALWIRE_API_TOKEN
+        sync: false
+      - key: SIGNALWIRE_SPACE_URL
+        sync: false      # e.g. yourspace.signalwire.com
+      - key: SIGNALWIRE_FROM_NUMBER
+        sync: false      # E.164 format: +1xxxxxxxxxx
+      - key: SIGNALWIRE_SPOOF_NUMBER
+        sync: false      # optional caller-ID override
+
+      # ── Twilio (fallback / legacy) ────────────────────────────────────────────
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN
